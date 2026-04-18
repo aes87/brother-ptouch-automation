@@ -224,7 +224,25 @@ def tape_info() -> None:
 @main.command()
 def scan() -> None:
     """List connected printers (Phase 5 stub)."""
-    click.echo("Hardware transports not wired up yet. Printer arrives 2026-04-19.")
+    click.echo("Hardware transports not wired up yet. USB/BT transports land with Phase 5.")
+
+
+@main.command()
+@click.option(
+    "--transport", "transport_name",
+    type=click.Choice(["usb", "bluetooth"]),
+    default="usb", show_default=True,
+)
+def status(transport_name: str) -> None:
+    """Query the printer and report loaded tape + any error flags.
+
+    Requires a hardware transport. Returns non-zero on any error condition
+    (wrong media, cover open, overheating, etc.) so scripts can gate on it.
+    """
+    raise click.ClickException(
+        f"{transport_name} transport not wired up yet — arrives in Phase 5. "
+        "`lp status` will query the printer live once hardware lands."
+    )
 
 
 @main.command()

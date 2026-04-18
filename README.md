@@ -26,6 +26,7 @@ This project is a small, fast automation layer that fixes those. Templates are P
 - **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's circumference
 - **Icons** — ~50 bundled Lucide icons; templates can opt in to an `icon=` field. Install the full Lucide (~1500) or Material Design Icons (~7000) sets with `lp icons install-lucide` / `lp icons install-mdi`
 - **Multi-label batch jobs** — `lp batch spec.json` chains any number of labels into one print run with half-cuts between them (PT-P750W), so they come off the printer as a single strip
+- **Tape-status autodetect** — parses the printer's 32-byte status reply (loaded tape width + colour, errors, cover-open, overheating) and gates real sends on "the loaded tape matches what this job wants"
 - **QR codes + images** directly from the CLI or service (no "design it in Photoshop first")
 - **Byte-exact** raster output, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI
 - **Tape-aware** — print-head geometry is handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
@@ -186,6 +187,10 @@ lp render <template> -f k=v ...       # PNG + raster preview
 lp print  <template> -f k=v ...       # encode (dry-run; writes .bin)
 lp print  <template> -f k=v ... --send  # actually drive the printer
 lp render-image <file.png>            # raster-encode an arbitrary image
+lp batch <spec.json>                  # chained multi-label job (half-cut)
+lp status                             # query loaded tape + error flags (Phase 5)
+lp icons list | preview <name>        # bundled Lucide icons
+lp icons install-lucide | install-mdi # clone full icon sets into ~/.config
 lp wires                              # known cable keywords + AWG sizes
 lp tape <mm>                          # persist current tape width
 lp tape-info                          # print-head geometry per tape
