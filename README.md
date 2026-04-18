@@ -304,6 +304,10 @@ The encoder targets Brother's [Raster Command Reference for PT-E550W / PT-P750W 
 - [ ] **Phase 5** — USB + Bluetooth transports, first physical prints, tape-width autodetect
 - [ ] **Phase 6** — `lp print --remote <host>` for running the service on a dedicated machine
 
+### Open proposals
+
+- [Proposal 0001 — QR-code context linking](docs/proposals/0001-qr-context-linking.md) (open): let any label carry a small QR pointing at its canonical source of truth in an Obsidian vault or a GitHub repo, via a short-link syntax (`vault:kitchen/spice/paprika`, `gh:aes87/3d-printing/designs/fan-tub-adapter`).
+
 See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the full plan.
 
 ## Development
