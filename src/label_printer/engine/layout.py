@@ -194,6 +194,68 @@ def split_lines_to_fit(
     return lines or [""]
 
 
+def render_two_line_label(
+    tape: TapeWidth,
+    primary: str,
+    secondary: str,
+    *,
+    icon: str | None = None,
+    primary_font: str | Path | None = None,
+    secondary_font: str | Path | None = None,
+    max_width_mm: float = 120.0,
+    padding_mm: float = 6.0,
+) -> Image.Image:
+    """Render a bold-on-top, subtitle-below label with optional left-side icon.
+
+    Shared across most template packs. Covers the common case: one headline,
+    one subtitle, centered horizontally, optional Lucide icon on the left.
+    Templates with unique visual needs (cable flags, PSU polarity icons,
+    QR codes) stay bespoke.
+    """
+
+    layout = TwoLineLayout(tape=tape)
+    p_font_path = primary_font if primary_font is not None else DEFAULT_BOLD
+    s_font_path = secondary_font if secondary_font is not None else DEFAULT_FONT
+
+    p_font = fit_text_to_box(
+        primary, mm_to_dots(max_width_mm), layout.primary_h, p_font_path
+    )
+    s_font = load_font(s_font_path, layout.secondary_h - 2)
+
+    from label_printer.tape import geometry_for
+    geom = geometry_for(tape)
+    icon_img = None
+    icon_offset = 0
+    if icon:
+        from label_printer.engine.icons import IconEngineUnavailable, load_icon
+        try:
+            icon_size = geom.print_pins - 4
+            icon_img = load_icon(icon, icon_size)
+            icon_offset = icon_size + mm_to_dots(2)
+        except IconEngineUnavailable as e:
+            raise ValueError(str(e)) from e
+
+    text_w = max(text_width(primary, p_font), text_width(secondary, s_font))
+    length_dots = icon_offset + text_w + mm_to_dots(padding_mm)
+    canvas = LabelCanvas.create(tape, length_mm=length_dots * 25.4 / 180)
+
+    if icon_img is not None:
+        canvas.image.paste(icon_img, (mm_to_dots(1), 2))
+
+    if icon_offset:
+        for text, font, y in (
+            (primary, p_font, layout.primary_y),
+            (secondary, s_font, layout.secondary_y),
+        ):
+            w = text_width(text, font)
+            x = icon_offset + (canvas.length_dots - icon_offset - w) // 2
+            draw_text(canvas, text, font, x, y, anchor="lt")
+    else:
+        draw_row(canvas, primary, p_font, layout.primary_y)
+        draw_row(canvas, secondary, s_font, layout.secondary_y)
+    return canvas.image
+
+
 @dataclass(frozen=True)
 class TwoLineLayout:
     """Vertical layout for a common 'big line on top, small line on bottom' label.

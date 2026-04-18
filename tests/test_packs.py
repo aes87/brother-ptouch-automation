@@ -52,7 +52,7 @@ def test_registry_refuses_duplicate_pack_name():
 
 def test_registry_contains_all_builtin_packs():
     reg = default_registry(include_entry_points=False)
-    assert set(reg.packs) == {"kitchen", "electronics", "three_d_printing", "utility"}
+    assert set(reg.packs) >= {"kitchen", "electronics", "three_d_printing", "utility"}
     # Every built-in spec should correspond to a loaded pack.
     assert len(reg.packs) == len(BUILTIN_PACK_SPECS)
     for pack in reg.packs.values():

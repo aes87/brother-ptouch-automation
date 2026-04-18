@@ -19,6 +19,14 @@ BUILTIN_PACK_SPECS: tuple[str, ...] = (
     "label_printer.templates.electronics:PACK",
     "label_printer.templates.three_d_printing:PACK",
     "label_printer.templates.utility:PACK",
+    "label_printer.templates.garden:PACK",
+    "label_printer.templates.networking:PACK",
+    "label_printer.templates.workshop:PACK",
+    "label_printer.templates.home_inventory:PACK",
+    "label_printer.templates.media:PACK",
+    "label_printer.templates.pet:PACK",
+    "label_printer.templates.travel:PACK",
+    "label_printer.templates.calibration:PACK",
 )
 
 # Entry-point group name for external packs.

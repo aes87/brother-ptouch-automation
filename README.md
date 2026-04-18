@@ -30,7 +30,7 @@ This is a small, fast automation layer that fixes those. Templates are Python cl
 - **Tape-status autodetect** — parses the 32-byte status reply (loaded width, media type, tape colour, text colour, 7 distinct error flags). Real sends can be gated on "the loaded tape matches what this job wants" so you never waste tape on a mismatch.
 
 ### Templates
-- **12 templates out of the box** across 4 packs (kitchen, electronics, 3D-printing, utility) — see the [gallery](#template-gallery) below
+- **36 templates across 12 packs** — kitchen / electronics / 3D printing / utility / garden / networking / workshop / home-inventory / media / pet / travel / calibration. [Browse the interactive gallery](https://aes87.github.io/brother-ptouch-automation/).
 - **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's outer diameter (π·OD + adhesive overlap); 40+ cable keywords plus AWG 0–30 built in
 - **QR codes + images** as first-class template types — no "design it in Photoshop first"
 - **Icons** — ~50 bundled Lucide icons that templates can opt in to via an `icon=` field; install the full Lucide (~1500) or Material Design Icons (~7000) sets with `lp icons install-lucide` / `lp icons install-mdi`
@@ -46,7 +46,7 @@ This is a small, fast automation layer that fixes those. Templates are Python cl
 - **Claude Code skill** — install the symlink and any Claude session can discover templates, propose labels, and print them
 
 ### Quality
-- **124 tests**, ruff clean, CI green on every push
+- **170+ tests**, ruff clean, CI green on every push
 
 ## Architecture
 
@@ -92,7 +92,11 @@ flowchart LR
 
 ## Template gallery
 
-Every template at 180 DPI on 12 mm tape — drop straight onto a TZe cassette.
+**36 templates across 12 packs** — kitchen, electronics, 3D printing, utility, garden, networking, workshop, home-inventory, media, pet, travel, calibration.
+
+👉 **[Interactive demo with every template, field schema, and copy-paste CLI example →](https://aes87.github.io/brother-ptouch-automation/)**
+
+A sample below. Every template renders at 180 DPI, drop straight onto a TZe cassette.
 
 | Pack | Template | Preview |
 |---|---|---|
@@ -140,8 +144,9 @@ python3.11 -m venv .venv
   --png-out flour.png --bin-out flour.bin
 
 # Pantry jar with an icon (opt-in; icons extra pulls cairosvg)
+# wheat for flour, egg for eggs, leaf for herbs, carrot for root veg — pick what fits
 .venv/bin/lp render kitchen/pantry_jar \
-  -f name="AP Flour" -f purchased=2026-04-19 -f icon=apple \
+  -f name="AP Flour" -f purchased=2026-04-19 -f icon=wheat \
   --png-out flour-with-icon.png
 
 # QR code with caption

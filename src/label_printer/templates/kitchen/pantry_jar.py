@@ -33,9 +33,9 @@ class PantryJarTemplate(Template):
                           example="2027-04-19"),
             TemplateField(
                 "icon",
-                "Optional Lucide icon name to paste on the left (e.g. 'apple', 'leaf'). "
-                "Requires the [icons] extra.",
-                required=False, example="apple",
+                "Optional Lucide icon name to paste on the left (e.g. 'wheat' for flour, "
+                "'egg' for eggs, 'leaf' for herbs). Requires the [icons] extra.",
+                required=False, example="wheat",
             ),
         ],
         default_tape=TapeWidth.MM_12,
