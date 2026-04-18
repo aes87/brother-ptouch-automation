@@ -27,7 +27,7 @@ This project is a small, fast automation layer that fixes those. Templates are P
 - **QR codes + images** directly from the CLI or service (no "design it in Photoshop first")
 - **Byte-exact** raster output, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI
 - **Tape-aware** — print-head geometry is handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
-- **Dry-run first** — every surface renders a PNG preview before anything leaves for the printer
+- **Dry-run by default** — `lp print` encodes but does not send unless you add `--send`. The printer never moves unexpectedly.
 - **HTTP service** with optional bearer-token auth, so the printer can live on one machine and clients call it from anywhere on the LAN
 - **Claude Code skill** — install the symlink and Claude sessions can discover templates, propose labels, and print them
 - **70+ tests**, ruff clean, CI on every push
@@ -164,13 +164,16 @@ python3.11 -m venv .venv
 lp list [--category kitchen]          # discover templates
 lp show <category>/<name>             # field schema for a template
 lp render <template> -f k=v ...       # PNG + raster preview
-lp print  <template> -f k=v ...       # encode + send (dry-run for now)
+lp print  <template> -f k=v ...       # encode (dry-run; writes .bin)
+lp print  <template> -f k=v ... --send  # actually drive the printer
 lp render-image <file.png>            # raster-encode an arbitrary image
 lp wires                              # known cable keywords + AWG sizes
 lp tape <mm>                          # persist current tape width
 lp tape-info                          # print-head geometry per tape
 lp serve --host 127.0.0.1 --port 8765 # run the HTTP service
 ```
+
+`lp print` is dry-run by default — it encodes the job and writes the raster command stream to `--bin-out`, but never touches the printer. Add `--send` to actually send. The HTTP service mirrors the same contract: `POST /print` is dry-run by default, set `"send": true` in the body to drive the transport.
 
 ### HTTP service
 
@@ -186,6 +189,11 @@ curl -X POST http://127.0.0.1:8765/render \
   -H 'Content-Type: application/json' \
   -d '{"template":"utility/qr","tape_mm":12,"fields":{"data":"https://example.com","caption":"site"}}' \
   --output qr.png
+
+# Print — dry-run by default, opt in to sending
+curl -X POST http://127.0.0.1:8765/print \
+  -H 'Content-Type: application/json' \
+  -d '{"template":"kitchen/spice","tape_mm":12,"fields":{"name":"Paprika"},"send":true}'
 ```
 
 Endpoints: `GET /health`, `GET /templates`, `POST /render`, `POST /print`.

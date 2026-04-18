@@ -45,6 +45,12 @@ class RenderRequest(BaseModel):
     fields: dict[str, Any] = {}
 
 
+class PrintRequest(RenderRequest):
+    # Dry-run by default — opt in explicitly to drive the hardware transport.
+    # Until Phase 5 lands, ``send=True`` will 501 because no transport is wired.
+    send: bool = False
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "mode": "dry-run"}
@@ -88,8 +94,8 @@ def render(req: RenderRequest, authorization: str | None = Header(default=None))
 
 
 @app.post("/print")
-def print_(req: RenderRequest, authorization: str | None = Header(default=None)) -> Response:
-    """Dry-run: returns the raster command bytes. Phase 5 will route to the printer."""
+def print_(req: PrintRequest, authorization: str | None = Header(default=None)) -> Response:
+    """Encode a label. Dry-run by default; set ``send=true`` to drive the printer."""
     _require_token(authorization)
     try:
         template = _REGISTRY.get(req.template)
@@ -98,6 +104,14 @@ def print_(req: RenderRequest, authorization: str | None = Header(default=None))
     tape = TapeWidth(4 if req.tape_mm in (3, 4) else req.tape_mm)
     image = template.render(template.validate(req.fields), tape)
     data = encode_job(image, tape)
+
+    if req.send:
+        raise HTTPException(
+            501,
+            "hardware transport not available yet (arrives in Phase 5). "
+            "Omit 'send' or set it to false for a dry-run.",
+        )
+
     return Response(
         data,
         media_type="application/octet-stream",

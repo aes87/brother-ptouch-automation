@@ -52,6 +52,17 @@ def test_print_dryrun_returns_raster(client):
     assert r.content.endswith(b"\x1a")
 
 
+def test_print_send_rejected_until_phase5(client):
+    r = client.post("/print", json={
+        "template": "kitchen/spice",
+        "tape_mm": 12,
+        "fields": {"name": "Paprika"},
+        "send": True,
+    })
+    assert r.status_code == 501
+    assert "Phase 5" in r.json()["detail"]
+
+
 def test_auth_when_token_set(client, monkeypatch):
     monkeypatch.setenv("LABEL_PRINTER_TOKEN", "s3cret")
     r = client.get("/templates")

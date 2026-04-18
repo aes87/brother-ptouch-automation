@@ -57,9 +57,19 @@ def test_print_template_dryrun(tmp_path: Path):
     assert bin_out.exists()
 
 
-def test_usb_transport_not_available():
+def test_print_defaults_to_dry_run(tmp_path: Path):
     result = CliRunner().invoke(main, [
-        "print", "kitchen/spice", "-f", "name=x", "--transport", "usb",
+        "print", "kitchen/spice", "-f", "name=Paprika",
+        "--bin-out", str(tmp_path / "dry.bin"),
+    ])
+    assert result.exit_code == 0, result.output
+    assert "dry-run" in result.output
+    assert (tmp_path / "dry.bin").exists()
+
+
+def test_print_send_rejected_until_phase5():
+    result = CliRunner().invoke(main, [
+        "print", "kitchen/spice", "-f", "name=x", "--send",
     ])
     assert result.exit_code != 0
     assert "Phase 5" in result.output

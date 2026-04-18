@@ -122,14 +122,29 @@ def render_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...]
 @click.argument("qualified")
 @click.option("--tape", "tape_mm", type=int, default=None)
 @click.option("-f", "--field", "fields", multiple=True, help="key=value template field.")
-@click.option("--transport", "transport_name",
-              type=click.Choice(["dryrun", "usb", "bluetooth"]),
-              default="dryrun", show_default=True)
+@click.option(
+    "--send/--dry-run",
+    default=False,
+    show_default=True,
+    help="Actually send the job to the printer. Default is dry-run — the "
+         "command stream is written to a file and nothing is sent.",
+)
+@click.option(
+    "--transport", "transport_name",
+    type=click.Choice(["usb", "bluetooth"]),
+    default="usb", show_default=True,
+    help="Hardware transport to use when --send is set.",
+)
 @click.option("--bin-out", type=click.Path(path_type=Path), default=Path("out.bin"),
-              help="For dryrun transport: where to write bytes.")
+              help="Dry-run output path (ignored when --send is set).")
 def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
-                   transport_name: str, bin_out: Path) -> None:
-    """Encode + send a template-based label to the printer."""
+                   send: bool, transport_name: str, bin_out: Path) -> None:
+    """Encode + (dry-run|send) a template-based label.
+
+    By default this is a dry-run: the label is rendered and encoded, the
+    raster command bytes are written to ``--bin-out``, and a hex preview is
+    printed. Pass ``--send`` to actually drive the hardware transport.
+    """
     reg = default_registry()
     try:
         template = reg.get(qualified)
@@ -141,15 +156,19 @@ def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
     image = template.render(data, tape)
     cmd_bytes = encode_job(image, tape)
 
-    if transport_name == "dryrun":
+    if not send:
         transport = DryRunTransport(bin_out)
         transport.send(cmd_bytes)
         click.echo(transport.hex_preview(cmd_bytes))
-        click.secho("dry-run: nothing was printed", fg="yellow")
+        click.secho(
+            "dry-run: nothing was printed. Pass --send to drive the printer.",
+            fg="yellow",
+        )
         return
 
     raise click.ClickException(
-        f"transport '{transport_name}' not available yet — arrives in Phase 5."
+        f"transport '{transport_name}' not available yet — arrives in Phase 5. "
+        "Until then, omit --send for a dry-run."
     )
 
 

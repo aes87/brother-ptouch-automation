@@ -54,16 +54,24 @@ lp list
 lp list --category kitchen
 lp show kitchen/pantry_jar
 
-# Dry-render preview to PNG
+# Dry-render preview to PNG (no bytes go anywhere near the printer)
 lp render kitchen/pantry_jar \
   -f name=FLOUR -f purchased=2026-04-19 \
   --png-out /tmp/label_preview.png
 
-# Print (dry-run until hardware day; real printer after that)
+# Encode-only (dry-run). Writes the raster command stream to a file.
+# This is the DEFAULT. No flag needed.
 lp print kitchen/pantry_jar \
   -f name=FLOUR -f purchased=2026-04-19 \
   --bin-out /tmp/label.bin
+
+# Actually print. Add --send ONLY after the user has approved the preview.
+lp print kitchen/pantry_jar \
+  -f name=FLOUR -f purchased=2026-04-19 \
+  --send
 ```
+
+**`--send` is the only way tape moves.** Without it, `lp print` is always a dry-run — it encodes + writes bytes but never drives the transport. Never pass `--send` without the user's explicit approval of the preview.
 
 ## Rules
 
