@@ -45,6 +45,28 @@ def test_raster_lines_tiff_packbits_for_nonblank():
     assert len(encoded) == 3 + length
 
 
+def test_half_cut_bit_in_advanced_mode():
+    # half_cut=True (default) sets bit 2 (0x04); chaining off sets bit 3 (0x08).
+    prologue = build_prologue(16 * 4, TapeWidth.MM_12, RasterOptions())
+    # Find the "ESC i K <flags>" sequence — 4 bytes: 1B 69 4B XX
+    for i in range(len(prologue) - 4):
+        if prologue[i : i + 3] == b"\x1b\x69\x4b":
+            assert prologue[i + 3] == 0x0C, "expected half-cut (0x04) + no-chain (0x08)"
+            break
+    else:
+        raise AssertionError("advanced-mode command not found in prologue")
+
+
+def test_half_cut_disabled():
+    prologue = build_prologue(16 * 4, TapeWidth.MM_12, RasterOptions(half_cut=False))
+    for i in range(len(prologue) - 4):
+        if prologue[i : i + 3] == b"\x1b\x69\x4b":
+            assert prologue[i + 3] == 0x08, "expected no-chain only, no half-cut"
+            break
+    else:
+        raise AssertionError("advanced-mode command not found in prologue")
+
+
 def test_full_job_terminates_with_print_and_feed():
     geom = geometry_for(TapeWidth.MM_12)
     img = make_hello_image(40, geom.print_pins)
@@ -169,7 +191,12 @@ def _brother_pt_expected_bytes(raster: bytes, tape: TapeWidth, feed_dots: int) -
 
 @pytest.mark.parametrize("tape", [TapeWidth.MM_12, TapeWidth.MM_24])
 def test_matches_brother_pt_byte_for_byte(tape: TapeWidth):
-    """Fixed raster bytes → identical command stream."""
+    """Fixed raster bytes → identical command stream.
+
+    brother_pt's reference encoder emits advanced-mode=0x08 (chaining off, no
+    half-cut). We set half_cut=False here to match that baseline; half-cut is
+    tested separately above.
+    """
     raster = bytes(
         # 4 lines, varied content to exercise Z-shortcut + packbits branches
         list(b"\x00" * 16)
@@ -177,7 +204,7 @@ def test_matches_brother_pt_byte_for_byte(tape: TapeWidth):
         + list(b"\xaa" * 16)
         + list(b"\x00" * 16)
     )
-    ours = encode_job_from_raster(raster, tape, RasterOptions(feed_dots=0))
+    ours = encode_job_from_raster(raster, tape, RasterOptions(feed_dots=0, half_cut=False))
     theirs = _brother_pt_expected_bytes(raster, tape, feed_dots=0)
     assert ours == theirs, (
         f"byte mismatch (len ours={len(ours)}, theirs={len(theirs)})\n"
@@ -190,10 +217,11 @@ def test_matches_brother_pt_byte_for_byte(tape: TapeWidth):
 
 @pytest.mark.parametrize("tape", [TapeWidth.MM_12, TapeWidth.MM_24])
 def test_golden_hello(tape: TapeWidth):
+    """Byte goldens — pinned to half_cut=False to keep in lockstep with brother_pt."""
     GOLDEN_BIN_DIR.mkdir(parents=True, exist_ok=True)
     geom = geometry_for(tape)
     img = make_hello_image(60, geom.print_pins)
-    data = encode_job(img, tape, RasterOptions(feed_dots=0))
+    data = encode_job(img, tape, RasterOptions(feed_dots=0, half_cut=False))
     golden = GOLDEN_BIN_DIR / f"hello_{int(tape)}mm.bin"
     if REGEN or not golden.exists():
         golden.write_bytes(data)

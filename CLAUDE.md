@@ -14,14 +14,16 @@ Automation flow for generating labels on a Brother P-touch Cube Plus (PT-P710BT)
 - Skill: installed at `~/.claude/skills/label-printer/` via symlink, same pattern as prompt-master
 
 ## Hardware Facts (pin these)
-- Printer: Brother PT-P710BT ("P-touch Cube Plus")
+- Primary printer: **Brother PT-P750W** (chosen over the PT-P710BT for half-cut support and Wi-Fi)
+- Compatible: PT-P710BT, PT-E550W (same raster command reference, same 128-pin head — code is identical)
 - Print resolution: 180 DPI
 - Print head width: 128 pins → usable print area ~18mm tall at max
 - Supported TZe tape widths: 3.5, 6, 9, 12, 18, 24 mm (laminated TZe tapes only)
 - User stocks **12mm and 24mm** — default templates to 12mm
 - Max label length: ~500 mm per print
 - Print speed: ~20 mm/s
-- Connectivity: USB + Bluetooth Classic (SPP). Not connected on this machine yet — first-time driver + pairing step is part of Phase 1.
+- Half-cut: **supported on P750W** (separates labels without severing liner); silently ignored on P710BT
+- Connectivity: USB + Wi-Fi on P750W (no built-in Bluetooth). Not connected on this machine yet — first-time driver + pairing step is part of Phase 5.
 
 ## Commands
 ```bash

@@ -14,7 +14,7 @@ model: sonnet
 
 # Label Printer
 
-You generate labels for the Brother PT-P710BT ("P-touch Cube Plus") via the `lp` CLI.
+You generate labels for the Brother PT-P750W (primary) via the `lp` CLI. The same commands work for the PT-P710BT and PT-E550W — they share the command set.
 
 **Expected install**: `lp` on `$PATH`, OR set `LP` to the absolute path of the executable (e.g. `LP=/path/to/label-printer/.venv/bin/lp`) at the top of your session. If neither works, ask the user where their `label-printer` checkout lives.
 

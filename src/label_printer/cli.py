@@ -181,14 +181,18 @@ def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
 @click.option("--out", "out_path", type=click.Path(path_type=Path), default=Path("out.bin"),
               show_default=True, help="Where to write the raster command stream.")
 @click.option("--no-auto-cut", is_flag=True)
+@click.option("--no-half-cut", is_flag=True, help="Disable half-cut (PT-P750W only).")
 @click.option("--mirror", is_flag=True)
 @click.option("--feed-dots", type=int, default=14, show_default=True)
 def render_image(image_path: Path, tape_mm: int | None, out_path: Path, no_auto_cut: bool,
-                 mirror: bool, feed_dots: int) -> None:
+                 no_half_cut: bool, mirror: bool, feed_dots: int) -> None:
     """Render an arbitrary image (skipping templates) to a command stream."""
     tape = _tape_from_mm(tape_mm) if tape_mm else _tape_from_mm(_default_tape())
     img = Image.open(image_path)
-    options = RasterOptions(auto_cut=not no_auto_cut, mirror=mirror, feed_dots=feed_dots)
+    options = RasterOptions(
+        auto_cut=not no_auto_cut, mirror=mirror,
+        half_cut=not no_half_cut, feed_dots=feed_dots,
+    )
     data = encode_job(img, tape, options)
     transport = DryRunTransport(out_path)
     transport.send(data)

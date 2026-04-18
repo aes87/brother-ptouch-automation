@@ -1,6 +1,6 @@
 # brother-ptouch-automation
 
-**Template-driven label automation for the Brother P-touch Cube Plus (PT-P710BT).** One engine, three surfaces — a CLI, an HTTP service, and a Claude Code skill — on top of a byte-exact raster encoder.
+**Template-driven label automation for the Brother PT-P750W (primary target) and PT-P710BT / PT-E550W (same command set).** One engine, three surfaces — a CLI, an HTTP service, and a Claude Code skill — on top of a byte-exact raster encoder.
 
 Print a pantry jar, a cable flag sized to the cable it's wrapping, a filament spool, or a QR code from a terminal, a web request, or a chat message. Same engine, same output.
 
@@ -28,6 +28,7 @@ This project is a small, fast automation layer that fixes those. Templates are P
 - **Byte-exact** raster output, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI
 - **Tape-aware** — print-head geometry is handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
 - **Dry-run by default** — `lp print` encodes but does not send unless you add `--send`. The printer never moves unexpectedly.
+- **Half-cut** — enabled by default; the PT-P750W separates labels without fully severing the liner, so strips stay attached for easier handling. Gracefully ignored on hardware that doesn't support it.
 - **HTTP service** with optional bearer-token auth, so the printer can live on one machine and clients call it from anywhere on the LAN
 - **Claude Code skill** — install the symlink and Claude sessions can discover templates, propose labels, and print them
 - **70+ tests**, ruff clean, CI on every push
@@ -275,9 +276,9 @@ Add `"garden"` to the `_PACKS` tuple in `templates/registry.py` and the registry
 
 ```mermaid
 flowchart LR
-    A["this project"]:::ours --- B["PT-P710BT<br/>Cube Plus"]:::primary
-    A --- C["PT-E550W"]:::works
-    A --- D["PT-P750W"]:::works
+    A["this project"]:::ours --- B["PT-P750W<br/>half-cut · Wi-Fi"]:::primary
+    A --- C["PT-P710BT<br/>Cube Plus"]:::works
+    A --- D["PT-E550W"]:::works
     A -.-|different<br/>command set| E["PT-P300BT<br/>(Cube)"]:::nope
     A -.-|different<br/>command set| F["PT-P910BT<br/>(Cube Pro)"]:::nope
     A -.-|different<br/>protocol| G["QL series / Dymo / Zebra"]:::nope
@@ -288,8 +289,8 @@ flowchart LR
     classDef nope fill:#fdd,stroke:#a00,color:#000
 ```
 
-- **Designed for** the **Brother PT-P710BT** ("P-touch Cube Plus") — 180 DPI, 128-pin head, TZe tapes 3.5–24 mm, USB + Bluetooth Classic (SPP)
-- **Also works** with the **PT-E550W** and **PT-P750W** — they share the exact same raster command reference and the same 128-pin head
+- **Primary target: Brother PT-P750W** — 180 DPI, 128-pin head, TZe tapes 3.5–24 mm, USB + Wi-Fi (+ optional Bluetooth adapter), half-cut supported
+- **Also works** with the **PT-P710BT** ("Cube Plus") and **PT-E550W** — same raster command reference, same 128-pin head; the P710BT lacks half-cut hardware but silently ignores the bit
 - **Does not work** with the smaller **PT-P300BT** (Cube, original) or the **PT-P910BT** (Cube Pro) — different command sets, different head geometry
 - **Does not work** with Brother QL shipping-label printers or with Dymo / Zebra / Epson — completely different protocols
 

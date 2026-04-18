@@ -1,7 +1,7 @@
 """Protocol constants for the Brother Raster Command Reference.
 
 Source: Brother "Software Developer's Manual — Raster Command Reference"
-for PT-E550W / PT-P750W / PT-P710BT.
+for PT-E550W / PT-P750W / PT-P710BT. Primary target: PT-P750W.
 """
 
 from enum import IntEnum, IntFlag

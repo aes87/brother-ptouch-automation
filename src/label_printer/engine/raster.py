@@ -35,9 +35,17 @@ from label_printer.tape import TapeWidth
 
 @dataclass(frozen=True)
 class RasterOptions:
+    """Options that control the print command stream.
+
+    ``half_cut`` is supported by the PT-P750W (and PT-E550W). The PT-P710BT
+    accepts the bit without error but silently ignores it on hardware that
+    lacks the physical mechanism. Leave enabled — harmless if unsupported.
+    """
+
     auto_cut: bool = True
     mirror: bool = False
     chaining: bool = False
+    half_cut: bool = True
     feed_dots: int = DEFAULT_FEED_DOTS
 
     def mode_flags(self) -> int:
@@ -49,8 +57,15 @@ class RasterOptions:
         return flags
 
     def advanced_flags(self) -> int:
-        # Bit 3 (0x08) = "no chaining". If chaining is enabled we clear it.
-        return 0x00 if self.chaining else 0x08
+        # Brother "Set expanded mode" byte (ESC i K):
+        #   bit 2 (0x04) = half-cut (leaves the liner intact between labels)
+        #   bit 3 (0x08) = no chain printing (feed + cut after last page)
+        flags = 0x00
+        if self.half_cut:
+            flags |= 0x04
+        if not self.chaining:
+            flags |= 0x08
+        return flags
 
 
 def _print_information(raster_data_len: int, tape: TapeWidth) -> bytes:
