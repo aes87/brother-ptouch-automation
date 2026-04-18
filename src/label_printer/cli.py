@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 from PIL import Image
 
-from label_printer import RasterOptions, TapeWidth, encode_job
+from label_printer import RasterOptions, TapeWidth, encode_batch, encode_job
 from label_printer import state as state_mod
 from label_printer.tape import geometry_for
 from label_printer.templates import default_registry
@@ -255,6 +255,169 @@ def wires() -> None:
     click.echo("\nAWG (insulated hookup wire):")
     for gauge in sorted(_AWG_OD_MM, reverse=True):
         click.echo(f"  {gauge:>3d} AWG   {_AWG_OD_MM[gauge]:>5.1f} mm")
+
+
+# --- Batch printing ---------------------------------------------------------
+
+@main.command(name="batch")
+@click.argument("spec_file", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--send/--dry-run",
+    default=False, show_default=True,
+    help="Actually send the chained job to the printer. Default: dry-run.",
+)
+@click.option(
+    "--no-half-cut", is_flag=True,
+    help="Disable half-cut between labels (full cut between each). P750W only.",
+)
+@click.option("--bin-out", type=click.Path(path_type=Path), default=Path("batch.bin"),
+              show_default=True, help="Dry-run output path.")
+def batch_cmd(spec_file: Path, send: bool, no_half_cut: bool, bin_out: Path) -> None:
+    """Print multiple labels as a single chained job.
+
+    SPEC_FILE is a JSON array — each element specifies one label:
+
+    \b
+        [
+          {"template": "kitchen/pantry_jar", "tape_mm": 12,
+           "fields": {"name": "AP Flour", "purchased": "2026-04-19"}},
+          {"template": "kitchen/spice",
+           "fields": {"name": "Smoked Paprika", "origin": "Spain"}}
+        ]
+
+    All labels must use the same tape width (chained jobs can't switch tape
+    mid-job). With half-cut enabled (default), labels come off the printer
+    as a single strip separated by partial cuts — much easier to handle
+    than N separate strips.
+    """
+    import json
+    raw = json.loads(spec_file.read_text())
+    if not isinstance(raw, list) or not raw:
+        raise click.ClickException("spec file must be a non-empty JSON array")
+
+    reg = default_registry()
+    tapes: set[int] = set()
+    images = []
+    for i, entry in enumerate(raw):
+        try:
+            template = reg.get(entry["template"])
+        except KeyError as e:
+            raise click.ClickException(f"entry {i}: {e}") from e
+        tape_mm = int(entry.get("tape_mm", int(template.meta.default_tape)))
+        tapes.add(tape_mm)
+        data = template.validate(entry.get("fields", {}))
+        images.append(template.render(data, _tape_from_mm(tape_mm)))
+
+    if len(tapes) != 1:
+        raise click.ClickException(
+            f"all batch entries must share one tape width; got {sorted(tapes)}"
+        )
+    tape = _tape_from_mm(tapes.pop())
+    options = RasterOptions(half_cut=not no_half_cut)
+    cmd_bytes = encode_batch(images, tape, options)
+
+    click.echo(f"batched {len(images)} label(s) → {len(cmd_bytes)} bytes")
+    if not send:
+        DryRunTransport(bin_out).send(cmd_bytes)
+        click.echo(f"bin: {bin_out}")
+        click.secho(
+            "dry-run: nothing was printed. Pass --send to drive the printer.",
+            fg="yellow",
+        )
+        return
+    raise click.ClickException(
+        "hardware transport not available yet (arrives in Phase 5)."
+    )
+
+
+# --- Icons -------------------------------------------------------------------
+
+@main.group()
+def icons() -> None:
+    """Manage icon packs (optional, used by templates that opt in)."""
+
+
+@icons.command("list")
+@click.option("--source", default=None, help="Filter by source (e.g. 'lucide', 'mdi').")
+def icons_list(source: str | None) -> None:
+    """List available icons."""
+    from label_printer.engine.icons import has_engine, registry
+    if not has_engine():
+        click.secho(
+            "cairosvg not installed — icons can't render. Run: "
+            "pip install 'label-printer[icons]'",
+            fg="yellow",
+        )
+    items = registry().available(source)
+    if not items:
+        click.echo("no icons found. Run `lp icons install-lucide` or "
+                   "`lp icons install-mdi` to install a full set.")
+        return
+    for name in items:
+        click.echo(f"  {name}")
+
+
+@icons.command("preview")
+@click.argument("name")
+@click.option("--size", default=64, show_default=True, help="Square size in dots.")
+@click.option("--out", "out_path", type=click.Path(path_type=Path),
+              default=Path("icon-preview.png"), show_default=True)
+def icons_preview(name: str, size: int, out_path: Path) -> None:
+    """Render an icon to a preview PNG."""
+    from label_printer.engine.icons import IconNotFoundError, load_icon
+    try:
+        img = load_icon(name, size)
+    except IconNotFoundError as e:
+        raise click.ClickException(str(e)) from e
+    img.save(out_path)
+    click.echo(f"{name} → {out_path} ({img.width}×{img.height})")
+
+
+@icons.command("install-lucide")
+def icons_install_lucide() -> None:
+    """Clone the full Lucide icon set to the user config directory."""
+    from label_printer.engine.icons import USER_ROOT
+    _install_icon_repo(
+        repo="https://github.com/lucide-icons/lucide.git",
+        subdir="icons",
+        target=USER_ROOT / "lucide",
+        display="Lucide (~1500 icons, ISC)",
+    )
+
+
+@icons.command("install-mdi")
+def icons_install_mdi() -> None:
+    """Clone the Material Design Icons set to the user config directory."""
+    from label_printer.engine.icons import USER_ROOT
+    _install_icon_repo(
+        repo="https://github.com/Templarian/MaterialDesign-SVG.git",
+        subdir="svg",
+        target=USER_ROOT / "mdi",
+        display="Material Design Icons (~7000 icons, Apache 2.0)",
+    )
+
+
+def _install_icon_repo(*, repo: str, subdir: str, target: Path, display: str) -> None:
+    import shutil
+    import subprocess
+    import tempfile
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        click.confirm(
+            f"{target} already exists. Replace it?",
+            abort=True, default=False,
+        )
+        shutil.rmtree(target)
+    click.echo(f"Cloning {display} from {repo} (shallow)...")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo, str(tmp_path / "repo")],
+            check=True,
+        )
+        shutil.copytree(tmp_path / "repo" / subdir, target)
+    count = sum(1 for _ in target.rglob("*.svg"))
+    click.secho(f"Installed {count} icons to {target}", fg="green")
 
 
 # --- Service mode ------------------------------------------------------------

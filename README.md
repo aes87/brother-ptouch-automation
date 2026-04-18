@@ -24,6 +24,8 @@ This project is a small, fast automation layer that fixes those. Templates are P
 
 - **12 templates out of the box** across kitchen, electronics, 3D-printing, and utility (QR codes, arbitrary images) — add your own template, or your own whole pack as a separate pip package (see [`docs/creating-a-pack.md`](docs/creating-a-pack.md))
 - **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's circumference
+- **Icons** — ~50 bundled Lucide icons; templates can opt in to an `icon=` field. Install the full Lucide (~1500) or Material Design Icons (~7000) sets with `lp icons install-lucide` / `lp icons install-mdi`
+- **Multi-label batch jobs** — `lp batch spec.json` chains any number of labels into one print run with half-cuts between them (PT-P750W), so they come off the printer as a single strip
 - **QR codes + images** directly from the CLI or service (no "design it in Photoshop first")
 - **Byte-exact** raster output, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI
 - **Tape-aware** — print-head geometry is handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
@@ -103,7 +105,7 @@ Every template at 180 DPI on 12 mm tape — drop straight onto a TZe cassette.
 
 | Pack | Template | Preview |
 |---|---|---|
-| `kitchen/` | `pantry_jar` | ![](docs/previews/kitchen_pantry_jar_12mm.png) |
+| `kitchen/` | `pantry_jar` | ![](docs/previews/kitchen_pantry_jar_12mm.png) <br> with icon: ![](docs/previews/kitchen_pantry_jar_with_icon_12mm.png) |
 | `kitchen/` | `spice` | ![](docs/previews/kitchen_spice_12mm.png) |
 | `kitchen/` | `leftover` | ![](docs/previews/kitchen_leftover_12mm.png) |
 | `kitchen/` | `freezer` | ![](docs/previews/kitchen_freezer_12mm.png) |
@@ -144,6 +146,22 @@ python3.11 -m venv .venv
 .venv/bin/lp render kitchen/pantry_jar \
   -f name="AP Flour" -f purchased=2026-04-19 \
   --png-out flour.png --bin-out flour.bin
+
+# Pantry jar with an icon (requires the [icons] extra)
+.venv/bin/pip install -e '.[icons]'
+.venv/bin/lp render kitchen/pantry_jar \
+  -f name="AP Flour" -f purchased=2026-04-19 -f icon=apple \
+  --png-out flour-with-icon.png
+
+# Batch-print a whole spice rack as one chained job (half-cut between each)
+cat > rack.json <<EOF
+[
+  {"template": "kitchen/spice", "tape_mm": 12, "fields": {"name": "Paprika"}},
+  {"template": "kitchen/spice", "tape_mm": 12, "fields": {"name": "Cumin"}},
+  {"template": "kitchen/spice", "tape_mm": 12, "fields": {"name": "Oregano"}}
+]
+EOF
+.venv/bin/lp batch rack.json
 
 # QR code with caption
 .venv/bin/lp render utility/qr \

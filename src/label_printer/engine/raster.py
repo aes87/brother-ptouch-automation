@@ -22,6 +22,7 @@ from label_printer.constants import (
     CMD_MODE_PREFIX,
     CMD_PRINT_AND_FEED,
     CMD_PRINT_INFORMATION_PREFIX,
+    CMD_PRINT_NEXT_PAGE,
     CMD_RASTER_LINE,
     CMD_RASTER_ZERO_LINE,
     DEFAULT_FEED_DOTS,
@@ -144,3 +145,46 @@ def encode_job_from_raster(
     options = options or RasterOptions()
     prologue = build_prologue(len(raster), tape, options)
     return prologue + _encode_raster_lines(raster) + CMD_PRINT_AND_FEED
+
+
+def encode_batch(
+    images: list[Image.Image],
+    tape: TapeWidth,
+    options: RasterOptions | None = None,
+) -> bytes:
+    """Encode multiple labels into one chained print job.
+
+    With the default ``options`` (``half_cut=True``, ``auto_cut=True``), the
+    printer produces a partial cut between each label — they come off the
+    printer as a single strip attached by the liner, which is easier to
+    handle than N separate strips. The final label gets a full feed-and-cut.
+
+    Pages are framed with per-page ``print_information`` + control codes,
+    separated by ``0x0C`` (next page) and terminated by ``0x1A`` (print and
+    feed). The session-level ``invalidate`` + ``ESC @`` + dynamic-mode +
+    status-notification commands are emitted once at the start.
+    """
+    if not images:
+        raise ValueError("encode_batch requires at least one image")
+    options = options or RasterOptions()
+
+    out = bytearray()
+    out += INVALIDATE_BYTES
+    out += CMD_INITIALIZE
+    out += CMD_DYNAMIC_MODE_RASTER
+    out += CMD_ENABLE_STATUS_NOTIFICATION
+
+    last = len(images) - 1
+    for i, image in enumerate(images):
+        raster = image_to_raster_bytes(image, tape)
+        # Per-page declaration: the raster-line count in print_information
+        # is specific to this page.
+        out += _print_information(len(raster), tape)
+        out += CMD_MODE_PREFIX + options.mode_flags().to_bytes(1, "little")
+        out += CMD_ADVANCED_MODE_PREFIX + options.advanced_flags().to_bytes(1, "little")
+        out += CMD_MARGIN_PREFIX + options.feed_dots.to_bytes(2, "little")
+        out += CMD_COMPRESSION_TIFF
+        out += _encode_raster_lines(raster)
+        out += CMD_PRINT_AND_FEED if i == last else CMD_PRINT_NEXT_PAGE
+
+    return bytes(out)

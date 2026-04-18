@@ -94,6 +94,10 @@ CMD_COMPRESSION_TIFF = b"\x4D\x02"
 CMD_RASTER_LINE = b"\x47"
 CMD_RASTER_ZERO_LINE = b"\x5A"
 CMD_PRINT_AND_FEED = b"\x1A"
+# Inter-page terminator: print the current page, advance to the next one.
+# Used between pages of a multi-label job so the printer keeps tape loaded
+# and (with half-cut enabled) separates pages with a partial cut.
+CMD_PRINT_NEXT_PAGE = b"\x0C"
 CMD_STATUS_REQUEST = b"\x1B\x69\x53"
 INVALIDATE_BYTES = b"\x00" * 100
 
