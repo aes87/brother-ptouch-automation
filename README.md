@@ -1,10 +1,10 @@
 # brother-ptouch-automation
 
-**Template-driven label automation for the Brother PT-P750W (primary target) and PT-P710BT / PT-E550W (same command set).** One engine, three surfaces — a CLI, an HTTP service, and a Claude Code skill — on top of a byte-exact raster encoder.
+**Template-driven label automation for the Brother PT-P750W** (primary target) and its raster-compatible siblings **PT-P710BT** and **PT-E550W**. One engine, three surfaces — a CLI, an HTTP service, and a Claude Code skill — on top of a byte-exact raster encoder.
 
-Print a pantry jar, a cable flag sized to the cable it's wrapping, a filament spool, or a QR code from a terminal, a web request, or a chat message. Same engine, same output.
+Print a pantry jar, a cable flag sized to the exact cable it's wrapping, a filament spool, a QR code, or a twenty-label spice rack batch — from a terminal, a web request, or a chat message.
 
-![kitchen pantry jar](docs/previews/kitchen_pantry_jar_12mm.png)
+![kitchen pantry jar](docs/previews/kitchen_pantry_jar_with_icon_12mm.png)
 ![utility qr](docs/previews/utility_qr_12mm.png)
 ![3d filament spool](docs/previews/three_d_printing_filament_spool_12mm.png)
 ![electronics cable flag](docs/previews/electronics_cable_flag_12mm.png)
@@ -18,23 +18,35 @@ The Brother P-touch Editor app is fine for a one-off, but it's terrible at the w
 - Sharing a template library across projects
 - Getting the *same* label twice in a row, reliably
 
-This project is a small, fast automation layer that fixes those. Templates are Python classes with validated field schemas. The raster encoder is byte-exact against Brother's official command reference. The three surfaces (CLI, HTTP service, Claude Code skill) all call the same engine, so a label triggered from Claude comes off the tape identical to one triggered from the shell.
+This is a small, fast automation layer that fixes those. Templates are Python classes with validated field schemas. The raster encoder is byte-exact against Brother's official command reference. The three surfaces (CLI, HTTP service, Claude Code skill) all call the same engine, so a label triggered from Claude comes off the tape identical to one triggered from the shell.
 
 ## Features
 
-- **12 templates out of the box** across kitchen, electronics, 3D-printing, and utility (QR codes, arbitrary images) — add your own template, or your own whole pack as a separate pip package (see [`docs/creating-a-pack.md`](docs/creating-a-pack.md))
-- **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's circumference
-- **Icons** — ~50 bundled Lucide icons; templates can opt in to an `icon=` field. Install the full Lucide (~1500) or Material Design Icons (~7000) sets with `lp icons install-lucide` / `lp icons install-mdi`
-- **Multi-label batch jobs** — `lp batch spec.json` chains any number of labels into one print run with half-cuts between them (PT-P750W), so they come off the printer as a single strip
-- **Tape-status autodetect** — parses the printer's 32-byte status reply (loaded tape width + colour, errors, cover-open, overheating) and gates real sends on "the loaded tape matches what this job wants"
-- **QR codes + images** directly from the CLI or service (no "design it in Photoshop first")
-- **Byte-exact** raster output, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI
-- **Tape-aware** — print-head geometry is handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
-- **Dry-run by default** — `lp print` encodes but does not send unless you add `--send`. The printer never moves unexpectedly.
-- **Half-cut** — enabled by default; the PT-P750W separates labels without fully severing the liner, so strips stay attached for easier handling. Gracefully ignored on hardware that doesn't support it.
-- **HTTP service** with optional bearer-token auth, so the printer can live on one machine and clients call it from anywhere on the LAN
-- **Claude Code skill** — install the symlink and Claude sessions can discover templates, propose labels, and print them
-- **70+ tests**, ruff clean, CI on every push
+### Engine
+- **Byte-exact** raster encoder, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI — every byte the printer receives is verified against a known-good reference at the raster-bytes layer
+- **Tape-aware** — print-head geometry handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
+- **Half-cut** — enabled by default on PT-P750W so chained labels come off the printer as a single strip attached by the liner; silently ignored on hardware without the mechanism
+- **Multi-label batch jobs** — one prologue, per-page raster blocks, `0x0C` separators, `0x1A` terminator. `lp batch spec.json` prints twenty spice-rack labels in one run with half-cuts between each.
+- **Tape-status autodetect** — parses the 32-byte status reply (loaded width, media type, tape colour, text colour, 7 distinct error flags). Real sends can be gated on "the loaded tape matches what this job wants" so you never waste tape on a mismatch.
+
+### Templates
+- **12 templates out of the box** across 4 packs (kitchen, electronics, 3D-printing, utility) — see the [gallery](#template-gallery) below
+- **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's outer diameter (π·OD + adhesive overlap); 40+ cable keywords plus AWG 0–30 built in
+- **QR codes + images** as first-class template types — no "design it in Photoshop first"
+- **Icons** — ~50 bundled Lucide icons that templates can opt in to via an `icon=` field; install the full Lucide (~1500) or Material Design Icons (~7000) sets with `lp icons install-lucide` / `lp icons install-mdi`
+- **Pack plug-in system** — ship your own templates as a separate pip package. External packs register via standard Python entry points. See [`docs/creating-a-pack.md`](docs/creating-a-pack.md).
+
+### Safety
+- **Dry-run by default** — `lp print` and `lp batch` encode + write bytes to a file but never drive the transport unless you add `--send`. The printer never moves unexpectedly.
+- **Supply-chain aware** — external template packs can be disabled with `LABEL_PRINTER_DISABLE_ENTRY_POINT_PACKS=1`; broken packs are isolated per-pack, one bad install never bricks the CLI
+
+### Surfaces
+- **`lp` CLI** — fast, scriptable, friendly
+- **HTTP service** — FastAPI with optional bearer-token auth, so the printer can live on one machine and clients call it from anywhere on the LAN
+- **Claude Code skill** — install the symlink and any Claude session can discover templates, propose labels, and print them
+
+### Quality
+- **124 tests**, ruff clean, CI green on every push
 
 ## Architecture
 
@@ -43,13 +55,14 @@ flowchart LR
     subgraph clients["clients"]
         CLI["lp CLI"]
         Skill["/label-printer<br/>Claude Code skill"]
-        HTTP["HTTP POST /print<br/>from anywhere"]
+        HTTP["HTTP service<br/>(any LAN client)"]
     end
 
     subgraph engine["label_printer engine"]
-        Registry["template registry<br/>auto-discovered"]
+        Registry["template registry<br/>built-in + entry-point packs"]
         Renderer["template.render<br/>→ Pillow Image"]
-        RasterEnc["raster encoder<br/>128-pin aligned<br/>TIFF-PackBits"]
+        RasterEnc["raster encoder<br/>128-pin aligned<br/>TIFF-PackBits<br/>half-cut, chaining"]
+        Status["status parser<br/>tape-match gate"]
     end
 
     subgraph transports["transports"]
@@ -58,7 +71,7 @@ flowchart LR
         BT["Bluetooth SPP<br/>(phase 5)"]
     end
 
-    Printer((("PT-P710BT<br/>180 DPI · 128 pins")))
+    Printer((("PT-P750W<br/>180 DPI · 128 pins<br/>half-cut")))
 
     CLI --> Registry
     Skill --> Registry
@@ -68,37 +81,14 @@ flowchart LR
     RasterEnc --> Dryrun
     RasterEnc --> USB
     RasterEnc --> BT
+    USB -.query.-> Status
+    BT -.query.-> Status
+    Status -.-> RasterEnc
     USB --> Printer
     BT --> Printer
 ```
 
-**Key separation**: templates produce a Pillow `Image` sized for the loaded tape; the engine converts the image to Brother's raster command stream; transports only care about `send(bytes)`. Clients never touch transport code. Swapping from a local printer to a network service (Phase 6) or migrating to a different host is zero-template-change work.
-
-## Job lifecycle
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User
-    participant Skill as /label-printer
-    participant Registry
-    participant Engine
-    participant Transport
-    participant Printer as PT-P710BT
-
-    User->>Skill: "label this jar: sriracha, opened 2026-04-10"
-    Skill->>Registry: find template for "jar"
-    Registry-->>Skill: kitchen/pantry_jar + field schema
-    Skill->>Engine: render(validate(fields), tape=12mm)
-    Engine-->>Skill: PNG preview
-    Skill->>User: show preview, confirm?
-    User-->>Skill: yes
-    Skill->>Engine: encode_job(image, tape)
-    Engine-->>Skill: raster command bytes
-    Skill->>Transport: send(bytes)
-    Transport->>Printer: USB / BT / dryrun
-    Printer-->>User: label on tape
-```
+**Key separation**: templates produce a Pillow `Image` sized for the loaded tape; the engine converts it to a Brother raster command stream; transports only care about `send(bytes)`. Clients never touch transport code. Swapping from a local printer to a network service or migrating to a different host is zero-template-change work.
 
 ## Template gallery
 
@@ -137,10 +127,11 @@ Supported out of the box: `ethernet`, `cat5/5e/6/6a/7/8`, `coax`, `hdmi`, `displ
 git clone https://github.com/aes87/brother-ptouch-automation.git
 cd brother-ptouch-automation
 python3.11 -m venv .venv
-.venv/bin/pip install -e '.[barcode,service]'
+.venv/bin/pip install -e '.[barcode,service,icons]'
 
-# Discover
-.venv/bin/lp list
+# Discover what's shipped
+.venv/bin/lp packs            # installed template packs (built-in + entry-point)
+.venv/bin/lp list             # all templates
 .venv/bin/lp show kitchen/pantry_jar
 
 # Dry-render a PNG + raster command stream (no printing)
@@ -148,11 +139,21 @@ python3.11 -m venv .venv
   -f name="AP Flour" -f purchased=2026-04-19 \
   --png-out flour.png --bin-out flour.bin
 
-# Pantry jar with an icon (requires the [icons] extra)
-.venv/bin/pip install -e '.[icons]'
+# Pantry jar with an icon (opt-in; icons extra pulls cairosvg)
 .venv/bin/lp render kitchen/pantry_jar \
   -f name="AP Flour" -f purchased=2026-04-19 -f icon=apple \
   --png-out flour-with-icon.png
+
+# QR code with caption
+.venv/bin/lp render utility/qr \
+  -f data=https://github.com/aes87/brother-ptouch-automation \
+  -f caption=repo \
+  --png-out qr.png
+
+# Cable flag, auto-sized for the cable
+.venv/bin/lp render electronics/cable_flag \
+  -f source=NAS -f dest="SWITCH p3" -f wire=ethernet \
+  --png-out cable.png
 
 # Batch-print a whole spice rack as one chained job (half-cut between each)
 cat > rack.json <<EOF
@@ -164,16 +165,9 @@ cat > rack.json <<EOF
 EOF
 .venv/bin/lp batch rack.json
 
-# QR code with caption
-.venv/bin/lp render utility/qr \
-  -f data=https://github.com/aes87/brother-ptouch-automation \
-  -f caption=repo \
-  --png-out qr.png
-
-# Cable flag, automatically sized for the cable
-.venv/bin/lp render electronics/cable_flag \
-  -f source=NAS -f dest="SWITCH p3" -f wire=ethernet \
-  --png-out cable.png
+# When hardware lands: verify the right tape is loaded, then actually print
+.venv/bin/lp status           # parses the printer's status packet
+.venv/bin/lp batch rack.json --send
 ```
 
 ## Three surfaces
@@ -181,40 +175,57 @@ EOF
 ### CLI
 
 ```bash
-lp list [--category kitchen]          # discover templates
-lp show <category>/<name>             # field schema for a template
-lp render <template> -f k=v ...       # PNG + raster preview
-lp print  <template> -f k=v ...       # encode (dry-run; writes .bin)
-lp print  <template> -f k=v ... --send  # actually drive the printer
-lp render-image <file.png>            # raster-encode an arbitrary image
-lp batch <spec.json>                  # chained multi-label job (half-cut)
-lp status                             # query loaded tape + error flags (Phase 5)
-lp icons list | preview <name>        # bundled Lucide icons
-lp icons install-lucide | install-mdi # clone full icon sets into ~/.config
-lp wires                              # known cable keywords + AWG sizes
-lp tape <mm>                          # persist current tape width
-lp tape-info                          # print-head geometry per tape
-lp serve --host 127.0.0.1 --port 8765 # run the HTTP service
+# discover
+lp packs                               # installed template packs
+lp list [--category kitchen]           # templates in a pack
+lp show <category>/<name>              # field schema for a template
+lp tape-info                           # print-head geometry per tape
+lp wires                               # cable-keyword → outer-diameter table
+lp icons list [--source]               # bundled Lucide icons
+
+# render (safe — no transport touched)
+lp render <template> -f k=v ...        # PNG + raster preview
+lp render-image <file.png>             # raster-encode an arbitrary image
+
+# print — dry-run default, --send opt-in
+lp print <template> -f k=v ...         # single label
+lp print <template> -f k=v ... --send  # really print
+lp batch <spec.json>                   # chained multi-label job (half-cut)
+lp batch <spec.json> --send            # ditto, send for real
+
+# hardware (Phase 5)
+lp status                              # loaded tape + error flags
+lp scan                                # discover attached printers
+
+# config
+lp tape <mm>                           # persist current tape width
+lp icons install-lucide                # clone ~1500 Lucide icons to ~/.config
+lp icons install-mdi                   # clone ~7000 Material Design Icons
+
+# service
+lp serve --host 127.0.0.1 --port 8765  # FastAPI HTTP service
 ```
 
-`lp print` is dry-run by default — it encodes the job and writes the raster command stream to `--bin-out`, but never touches the printer. Add `--send` to actually send. The HTTP service mirrors the same contract: `POST /print` is dry-run by default, set `"send": true` in the body to drive the transport.
+`lp print` and `lp batch` are **dry-run by default** — they encode the job and write the raster command stream to `--bin-out`, but never touch the printer. Add `--send` to actually drive the transport. The HTTP service mirrors the same contract: `POST /print` is dry-run by default, set `"send": true` in the body to drive the transport.
 
 ### HTTP service
 
 ```bash
-export LABEL_PRINTER_TOKEN=s3cret     # optional auth
+export LABEL_PRINTER_TOKEN=s3cret     # optional bearer-token auth
 lp serve --host 127.0.0.1 --port 8765
 ```
 
 ```bash
 curl -s http://127.0.0.1:8765/templates | jq .
+
+# Render returns a PNG
 curl -X POST http://127.0.0.1:8765/render \
   -H 'Authorization: Bearer s3cret' \
   -H 'Content-Type: application/json' \
   -d '{"template":"utility/qr","tape_mm":12,"fields":{"data":"https://example.com","caption":"site"}}' \
   --output qr.png
 
-# Print — dry-run by default, opt in to sending
+# Print — dry-run returns the raster bytes; set send:true to drive the transport
 curl -X POST http://127.0.0.1:8765/print \
   -H 'Content-Type: application/json' \
   -d '{"template":"kitchen/spice","tape_mm":12,"fields":{"name":"Paprika"},"send":true}'
@@ -236,7 +247,51 @@ From any Claude session:
 
 Claude picks the right template, proposes fields, dry-renders a PNG for you to review, and only prints once you approve.
 
-## How rendering actually works
+## Job lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User
+    participant Skill as /label-printer
+    participant Registry
+    participant Engine
+    participant Transport
+    participant Printer as PT-P750W
+
+    User->>Skill: "label this jar: sriracha, opened 2026-04-10"
+    Skill->>Registry: find template for "jar"
+    Registry-->>Skill: kitchen/pantry_jar + field schema
+    Skill->>Engine: render(validate(fields), tape=12mm)
+    Engine-->>Skill: PNG preview
+    Skill->>User: show preview, confirm?
+    User-->>Skill: yes
+    Skill->>Transport: query_status()
+    Transport->>Printer: ESC i S
+    Printer-->>Transport: 32-byte status packet
+    Transport-->>Skill: PrinterStatus(12mm white tape, no errors)
+    Skill->>Engine: encode_job(image, tape)
+    Engine-->>Skill: raster command bytes
+    Skill->>Transport: send(bytes)
+    Transport->>Printer: ESC @, init, raster, 1A
+    Printer-->>User: label on tape
+```
+
+## Multi-label batch workflow
+
+```mermaid
+flowchart LR
+    spec["spec.json<br/>[label1, label2, ...]"] --> cli["lp batch"]
+    cli --> validate["validate all<br/>same tape width"]
+    validate --> render["render each<br/>to Pillow Image"]
+    render --> batch["encode_batch"]
+    batch --> prologue["session prologue<br/>(once)"]
+    prologue --> loop["per-page:<br/>print_information<br/>+ mode + advanced<br/>+ margin + compression<br/>+ raster data<br/>+ 0x0C (next page)"]
+    loop --> final["last page:<br/>+ 0x1A (print & feed)"]
+    final --> printer["one strip,<br/>half-cut between labels"]
+```
+
+## How a single label is encoded
 
 ```mermaid
 flowchart TD
@@ -252,9 +307,11 @@ flowchart TD
     I --> J["prologue<br/>(init, mode, info, margin)<br/>+ lines<br/>+ 0x1A (print & feed)"]
 ```
 
-## Adding your own template
+## Extending it
 
-Drop a file in `src/label_printer/templates/<pack>/<name>.py`:
+### Add a single template to an existing pack
+
+Drop a file in `src/label_printer/templates/<pack>/<name>.py` and register it in the pack's `__init__.py`:
 
 ```python
 from PIL import Image
@@ -272,7 +329,7 @@ class SeedPacketTemplate(Template):
     meta = TemplateMeta(
         category="garden",
         name="seed_packet",
-        summary="Seed packet: variety + sow-by + year.",
+        summary="Seed packet: variety + sow-by.",
         fields=[
             TemplateField("variety", "Cultivar.", example="Brandywine tomato"),
             TemplateField("sow_by", "Sow-by date.", example="2026-05-15"),
@@ -280,7 +337,7 @@ class SeedPacketTemplate(Template):
         default_tape=TapeWidth.MM_12,
     )
 
-    def render(self, data: dict, tape: TapeWidth) -> Image.Image:
+    def render(self, data, tape):
         name = str(data["variety"])
         sub = f"sow by {data['sow_by']}"
         layout = TwoLineLayout(tape=tape)
@@ -293,7 +350,17 @@ class SeedPacketTemplate(Template):
         return canvas.image
 ```
 
-Add `"garden"` to the `_PACKS` tuple in `templates/registry.py` and the registry discovers it on next run. No manifest file, no re-install.
+### Ship a whole pack as a separate pip package
+
+Your users can `pip install label-printer-ham-radio` and get your templates alongside the built-ins. The pack registers via standard Python entry points:
+
+```toml
+# In your package's pyproject.toml
+[project.entry-points."label_printer.packs"]
+ham_radio = "label_printer_ham:PACK"
+```
+
+Full walkthrough in [`docs/creating-a-pack.md`](docs/creating-a-pack.md). The doc also covers the trust model, collision rules, and the `LABEL_PRINTER_DISABLE_ENTRY_POINT_PACKS=1` safe-mode escape hatch.
 
 ## Hardware & compatibility
 
@@ -312,9 +379,9 @@ flowchart LR
     classDef nope fill:#fdd,stroke:#a00,color:#000
 ```
 
-- **Primary target: Brother PT-P750W** — 180 DPI, 128-pin head, TZe tapes 3.5–24 mm, USB + Wi-Fi (+ optional Bluetooth adapter), half-cut supported
-- **Also works** with the **PT-P710BT** ("Cube Plus") and **PT-E550W** — same raster command reference, same 128-pin head; the P710BT lacks half-cut hardware but silently ignores the bit
-- **Does not work** with the smaller **PT-P300BT** (Cube, original) or the **PT-P910BT** (Cube Pro) — different command sets, different head geometry
+- **Primary target: Brother PT-P750W** — 180 DPI, 128-pin head, TZe tapes 3.5–24 mm, USB + Wi-Fi, half-cut supported
+- **Also works** with **PT-P710BT** ("Cube Plus") and **PT-E550W** — same raster command reference, same 128-pin head. The P710BT lacks half-cut hardware but silently ignores the bit.
+- **Does not work** with the smaller **PT-P300BT** (Cube, original) or the **PT-P910BT** (Cube Pro) — different command sets and different head geometry
 - **Does not work** with Brother QL shipping-label printers or with Dymo / Zebra / Epson — completely different protocols
 
 The encoder targets Brother's [Raster Command Reference for PT-E550W / PT-P750W / PT-P710BT](https://download.brother.com/welcome/docp100064/cv_pte550wp750wp710bt_eng_raster_102.pdf).
@@ -324,20 +391,24 @@ The encoder targets Brother's [Raster Command Reference for PT-E550W / PT-P750W 
 - [x] **Phase 1** — raster encoder + `DryRunTransport` + byte goldens + cross-check against `brother_pt`
 - [x] **Phase 2** — template engine + registry + template packs (kitchen / electronics / 3D-printing / utility)
 - [x] **Phase 3** — CLI + HTTP service + Claude Code skill, all on `DryRunTransport`
+- [x] **Pack primitive** — `TemplatePack` dataclass, `label_printer.packs` entry-point group, external packs as standalone pip packages
+- [x] **Half-cut + multi-label batch** — chained print jobs with partial cuts between labels (PT-P750W)
+- [x] **Icon engine** — curated Lucide bundle + optional full-set installers, opt-in per template
+- [x] **Status parsing** — 32-byte packet decoded, `ensure_tape_matches()` gate for real sends
 - [ ] **Phase 4** — chat-bridge integration (Telegram / Slack) in dry-run
-- [ ] **Phase 5** — USB + Bluetooth transports, first physical prints, tape-width autodetect
+- [ ] **Phase 5** — USB + Bluetooth transports, first physical prints, live tape-match gating
 - [ ] **Phase 6** — `lp print --remote <host>` for running the service on a dedicated machine
 
 ### Open proposals
 
-- [Proposal 0001 — QR-code context linking](docs/proposals/0001-qr-context-linking.md) (open): let any label carry a small QR pointing at its canonical source of truth in an Obsidian vault or a GitHub repo, via a short-link syntax (`vault:kitchen/spice/paprika`, `gh:aes87/3d-printing/designs/fan-tub-adapter`).
+- [Proposal 0001 — QR-code context linking](docs/proposals/0001-qr-context-linking.md) (open): let any label carry a small QR pointing at its canonical source of truth in an Obsidian vault or a GitHub repo. Resolved by Claude from a photo — no URL scheme drama, no hosted redirect, no "Obsidian not installed" dead-ends.
 
-See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the full plan.
+See [`docs/implementation-plan.md`](docs/implementation-plan.md) for the full phased plan.
 
 ## Development
 
 ```bash
-.venv/bin/pytest                  # unit + integration
+.venv/bin/pytest                  # 124 tests — unit + integration
 .venv/bin/pytest -m hardware      # transport tests, require the physical printer
 .venv/bin/ruff check src tests
 ```
@@ -348,6 +419,12 @@ Regenerate byte goldens after an intentional encoder change:
 REGEN_GOLDENS=1 .venv/bin/pytest tests/test_raster_encoder.py
 ```
 
+Safe mode (skip all entry-point-registered external packs):
+
+```bash
+LABEL_PRINTER_DISABLE_ENTRY_POINT_PACKS=1 lp list
+```
+
 ## Credits
 
 Built from Brother's [official raster command manual](https://download.brother.com/welcome/docp100064/cv_pte550wp750wp710bt_eng_raster_102.pdf), informed by two excellent open-source implementations:
@@ -355,8 +432,8 @@ Built from Brother's [official raster command manual](https://download.brother.c
 - [treideme/brother_pt](https://github.com/treideme/brother_pt) — Python USB driver, Apache 2.0
 - [robby-cornelissen/pt-p710bt-label-maker](https://github.com/robby-cornelissen/pt-p710bt-label-maker) — Python Bluetooth driver
 
-See [`CREDITS.md`](CREDITS.md) for the full dependency list and license attributions.
+Bundled icons are [Lucide](https://lucide.dev/) (ISC) — see [`assets/icons/LICENSE-Lucide.txt`](assets/icons/LICENSE-Lucide.txt). Bundled fonts are DejaVu (Bitstream Vera derivative) — see [`assets/fonts/LICENSE-DejaVu.txt`](assets/fonts/LICENSE-DejaVu.txt). Full dependency list and license attributions in [`CREDITS.md`](CREDITS.md).
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). Bundled DejaVu fonts are under the Bitstream Vera license; see [`assets/fonts/LICENSE-DejaVu.txt`](assets/fonts/LICENSE-DejaVu.txt).
+MIT — see [`LICENSE`](LICENSE).
