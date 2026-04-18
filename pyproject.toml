@@ -19,9 +19,15 @@ usb = ["pyusb>=1.2"]
 bluetooth = ["pybluez>=0.23; platform_system == 'Linux'"]
 service = ["fastapi>=0.110", "uvicorn>=0.27"]
 barcode = ["python-barcode>=0.15", "qrcode>=7.4"]
+test = [
+    "pytest>=8.0",
+    "ruff>=0.3",
+    "httpx>=0.27",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.3",
+    "httpx>=0.27",
     "brother_pt @ git+https://github.com/treideme/brother_pt.git",
 ]
 
