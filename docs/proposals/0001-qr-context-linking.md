@@ -2,11 +2,12 @@
 
 **Status**: open (feature request)
 **Opened**: 2026-04-18
+**Updated**: 2026-04-18 (pivoted to "Claude resolves from a photo" after phone-compat discussion)
 **Requested by**: @aes87
 
 ## One-line summary
 
-Let any label optionally carry a small QR code that links back to the canonical "source of truth" for whatever's being labelled — an Obsidian vault note, a GitHub file, or any URL.
+Let any label optionally carry a small QR code pointing at the canonical source of truth — an Obsidian vault note or a GitHub file — and let Claude resolve the link from a photo. The phone never has to understand the QR's contents.
 
 ## Motivation
 
@@ -17,39 +18,60 @@ Labels tell you *what* something is. They don't tell you the stuff you only find
 - the cable is "NAS → SWITCH p3" — but which VLAN? which patch panel port?
 - the print bin is "Fan tub clip v2" — but where's the STL, the README, the revision history?
 
-All of that context exists in your Obsidian vault and your GitHub repos. The label just needs a stable way to point at it. Scan the QR with a phone → the right note / file / dashboard opens. Done.
+All of that context exists in the Obsidian vault and the GitHub repos. The label needs a stable way to point at it. Photograph the QR → Claude reads it → fetches the vault note or repo file → answers in chat. Done.
 
-## Core ideas
+## The key insight: Claude is the resolver
 
-1. **Templates opt in to a `link` field**. If present, reserve a small QR region at the right edge of the label and encode the link. Text shrinks to accommodate — or the label grows — depending on tape width and caller preference.
-2. **A link resolver turns short forms into full URLs**. Callers shouldn't have to write `obsidian://open?vault=MyVault&file=kitchen%2Fspice%2Fpaprika` every time. They write `vault:kitchen/spice/paprika` or `gh:aes87/3d-printing/designs/fan-tub-adapter/README.md` and the resolver expands it.
-3. **Stable URLs are the caller's responsibility**. The resolver does not try to guarantee a note or file still exists — labels are printed, not regenerated. If you rename the vault note, the QR is stale. That's a feature (your label is a revision-stamped receipt) not a bug.
-4. **Optional label→link index**. On print, write a row to `~/.config/label-printer/link_index.jsonl` (tape size, template, fields, resolved URL, timestamp). Lets you look up "what did that QR point to" even if the original intent is lost.
+An earlier draft of this proposal tried to design a QR payload that *any* phone's native scanner could open — `https://` for web, `obsidian://` for Obsidian URIs, hosted redirect services to bridge the gap. All of those are painful: they require publishing the vault, hosting infrastructure, or desktop-only caveats.
 
-## Shortlink syntax
+But we don't need any of that. The Telegram bridge + Claude Code on this machine already gives us a much better resolver:
 
-Keep it tiny and opinionated.
+1. User sees a label, photographs the QR with their phone
+2. Sends the photo to Claude via Telegram
+3. Claude reads the QR out of the image (vision)
+4. Claude parses the short-form, reads the vault note / repo file directly, summarises in chat
 
-| Short form | Expands to |
+The phone never has to understand the QR's contents. The QR can literally contain `vault:kitchen/spice/paprika` as a plain string — iOS and Android will shrug at that, but Claude won't.
+
+### Why this is better than "encode a universal URL"
+
+- **No URL scheme problem.** Native scanners don't need to handle anything.
+- **No hosting.** No redirect service, no GitHub Pages site, no publishing the vault anywhere.
+- **No "Obsidian not installed" dead-end.** The vault lives on the same machine as Claude; access is direct via `cli-anything-obsidian`.
+- **Richer response.** "Open the note" is a poor interaction compared to "summarise the relevant part, answer my specific question, cross-reference the git history." Claude can do all of that in one exchange.
+- **Works from anywhere you have your phone.** No device-local app requirement.
+
+The plumbing already exists:
+
+| Piece | Status |
 |---|---|
-| `https://…` / `http://…` | Passes through verbatim. |
-| `vault:<note-path>` | `obsidian://open?vault=<vault>&file=<note-path>` — vault name from config. |
-| `vault:<vault-name>:<note-path>` | Same, explicit vault override. |
-| `gh:<owner>/<repo>/<path>` | `https://github.com/<owner>/<repo>/blob/main/<path>` — branch configurable. |
-| `gh:<owner>/<repo>#<issue>` | `https://github.com/<owner>/<repo>/issues/<issue>`. |
-| `gh:<path>` | Same as above but `owner/repo` defaulted from config. |
-| `gist:<id>` | `https://gist.github.com/<owner>/<id>`. |
+| Telegram → Claude bridge | shipped (telegram-channel project) |
+| Vault access from Claude | shipped (cli-anything-obsidian) |
+| Repo access from Claude | trivially — the workspace is on the same disk |
+| This project's skill | shipped; needs a small extension for "photo → resolve → summarise" |
 
-Examples:
+## Design
 
-```
-vault:kitchen/spice/smoked-paprika
-vault:Martha:inoculating/strains/lions-mane
-gh:3d-printing/designs/fan-tub-adapter/README.md
-gh:aes87/label-printer#12
-```
+### QR payload (short-form, opaque to the phone)
 
-Config lives in `~/.config/label-printer/links.toml`:
+The QR contains a single short-form string. Whitespace-trimmed, ≤ 200 chars for QR density sanity.
+
+| Short form | Meaning |
+|---|---|
+| `vault:<path>` | Obsidian vault note at `<path>` in the default vault |
+| `vault:<name>:<path>` | Same, explicit vault |
+| `gh:<owner>/<repo>/<path>` | GitHub file at HEAD on the default branch |
+| `gh:<owner>/<repo>#<n>` | GitHub issue |
+| `gh:<path>` | Uses default owner/repo from config |
+| `gist:<id>` | Gist URL |
+| `https://…` | Raw URL (Claude can still follow it) |
+| `{"type":"filament_spool","spool_id":"..."}` | Arbitrary JSON — Claude figures out what to do |
+
+For `gh:` short-forms, a human-scanned real URL is a free bonus: iOS/Android recognise `github.com/...` and open it even if the QR content started as `gh:...` after Claude expands it at print time. But this is sugar, not required — the primary reader is Claude.
+
+### Config
+
+`~/.config/label-printer/links.toml`:
 
 ```toml
 [vault]
@@ -57,78 +79,76 @@ default = "aes-vault"
 
 [github]
 default_owner = "aes87"
-default_repo  = "brother-ptouch-automation"
 default_branch = "main"
 ```
 
-## Template integration
+### Claude-side resolver (new skill action)
 
-Two integration levels, in order of ambition.
+Extend the `/label-printer` skill (or create a sibling `/label-lookup` skill) with a "photo → resolve" workflow:
 
-### Level 1: a `link` field on existing templates
+1. Photo arrives in a Claude session (Telegram attachment, paste, etc.)
+2. Skill runs QR detection (`pyzbar`, `qreader`, or similar) to extract the payload string
+3. Parses the short-form:
+   - `vault:<path>` → `cli-anything-obsidian` reads the note, skill summarises
+   - `gh:<path>` → skill reads the file from the local repo clone, summarises
+   - URL → skill opens with WebFetch
+   - JSON → skill interprets the structure (e.g., filament spool → pull spool record + last-dry date)
+4. Skill replies in-channel with the summary. If the user's original Telegram message included a question ("what temp do I print this at?"), answer it using the resolved context.
 
-Every two-line template grows an optional `link` field. When set, the renderer leaves room for a small QR (tape-height square) at the right edge and encodes the resolved URL.
+### Label printing side
 
-```bash
-lp print kitchen/spice \
-  -f name="Smoked Paprika" -f origin=Spain -f best_by=2027-01 \
-  -f link=vault:kitchen/spice/smoked-paprika
-```
+Two levels of integration on the print surface:
 
-Preview:
+1. **`utility/qr` is sufficient today**. Print `data=vault:kitchen/spice/paprika` and a caption and you're done. No new template needed.
+2. **Optional: extend existing templates with a `link` field**. If set, reserve a small QR region at the right edge of the label and encode the resolved link. Existing fields unchanged, QR is opt-in per-label.
 
-```
-┌──────────────────────────────┬────┐
-│  Smoked Paprika              │ QR │
-│  Spain · bb 2027-01          │    │
-└──────────────────────────────┴────┘
-```
-
-Trade-off: the QR gets small on 12mm tape (70 px = ~10 mm square) — that's about the limit of what a phone camera can reliably scan in the real world with error correction M. Narrow tapes (6mm, 9mm) are not viable for this.
-
-### Level 2: a standalone "with_link" meta-template
-
-Wrap any template in a decorator that appends a QR tail:
-
-```bash
-lp print kitchen/spice+link \
-  -f name="Smoked Paprika" -f link=vault:kitchen/spice/smoked-paprika
-```
-
-Implementation is a meta-template that renders the inner template, appends a gap, and pastes a QR. Less invasive — no existing template signature changes.
-
-### Level 3: dedicated `utility/labeled_qr`
-
-Already half-covered by `utility/qr` with a caption. Could be renamed or given sugar for the short-link syntax: `lp print utility/qr -f data=vault:kitchen/spice/paprika -f caption=Paprika`.
-
-## Open questions
-
-- **Obsidian URI scanning UX**: if the phone doesn't have Obsidian installed, `obsidian://` URIs fail silently. Options:
-  (a) always encode `vault://` as a raw `obsidian://` URI and accept that desktop-only;
-  (b) encode a tiny web redirect (`https://my.site/l/<hash>`) that 302s to `obsidian://` on devices that support it, or shows a note summary otherwise. Requires hosting a resolver.
-- **Default redirect service**: ship an optional `lp serve --links` mode that does the redirect, pulled from the same index file as option (b).
-- **Hashing / short URLs**: for long GitHub URLs the QR gets dense. A local short-URL feature (`gh:…` → `go/l/abc`) is attractive but requires a resolver host.
-- **Link rot detection**: a `lp links verify` command that walks the index and checks each URL (for vault notes: file exists; for GitHub: 200 on the raw endpoint). Reports broken ones. Optional Phase 6 nice-to-have.
-- **Privacy**: the index file is local and plaintext. Fine. But a hosted redirect service would know every scan — explicitly opt-in if we ever build one.
+The at-print-time resolver (expanding `vault:...` → `obsidian://...`) becomes **optional** — only used if you want the QR to also work as a native URL on the phone, which is a nice-to-have for `gh:` targets and irrelevant for `vault:` ones.
 
 ## Acceptance criteria
 
-- [ ] `label_printer.engine.links` module: resolves short forms → full URLs using config
-- [ ] `~/.config/label-printer/links.toml` is read on startup; sensible defaults if absent
-- [ ] `utility/qr` accepts short-form links in its `data` field
-- [ ] At least two existing templates (`kitchen/spice` and `three_d_printing/filament_spool`) gain an optional `link` field
-- [ ] CLI: `lp links resolve <short>` prints the expanded URL (debugging aid)
-- [ ] CLI: on print, optionally append to `~/.config/label-printer/link_index.jsonl`
-- [ ] Tests: resolver round-trip, at least one template with a rendered QR, no regressions on existing templates without `link`
-- [ ] Docs: README section "Linking labels back to context"
-- [ ] Proposal updated with the final chosen design and closed
+**Core (printing side, done inside this repo)**
+
+- [ ] `label_printer.engine.links` module: parses and validates short-forms, loads config
+- [ ] `~/.config/label-printer/links.toml` with sensible defaults if absent
+- [ ] `utility/qr` accepts short-form strings in its `data` field (no expansion needed — the short form is what Claude scans)
+- [ ] At least two existing templates (`kitchen/spice`, `three_d_printing/filament_spool`) gain an optional `link` field that renders a small QR at the right edge
+- [ ] CLI: `lp links resolve <short>` prints the expanded URL (debugging aid for the `gh:`/web side)
+- [ ] Tests: short-form parsing, QR embedding in existing templates
+
+**Resolver side (Claude-side, done in the skill)**
+
+- [ ] Skill action: accept a photo, detect + decode the QR, parse the short-form
+- [ ] `vault:` → read via cli-anything-obsidian, summarise relevant sections
+- [ ] `gh:` → read the local clone of the repo, summarise
+- [ ] URL / `https:` → WebFetch, summarise
+- [ ] Unknown / unparseable → return the raw payload and say so
+- [ ] When the user's message contains a question, answer it using the resolved context
+- [ ] Reply via Telegram with the summary (+ optional follow-up)
+
+**Docs**
+
+- [ ] README: a "Linking labels back to context" section explaining the photo-to-Claude flow
+- [ ] SKILL.md: updated with the new action
 
 ## Non-goals
 
-- Hosting a public redirect service (too much scope; maybe Phase 6).
-- Writing an Obsidian plugin to backlink from note → printed label (can be a separate tool that reads the index file).
-- Encoding the full note content in the QR (impractical, QRs cap out around 3 KB of text at low density).
+- Hosting any public redirect or resolver service. The whole point of the pivot is we don't need one.
+- Publishing the vault publicly. Still a private resource, read only by Claude on your machine.
+- Writing an Obsidian plugin to backlink from note → printed label (can be a separate tool that reads a local index file, if you ever want it).
+- Encoding full note content in the QR (impractical — QRs max out around 3 KB).
+- Making QRs readable by arbitrary phone scanners when they contain `vault:` URIs. Claude is the intended reader; natives won't understand it and that's fine.
+
+## Open questions
+
+- **QR error correction**: on 12mm tape the QR is ~70×70 px ≈ 10×10 mm. Use error-correction level M (~15% redundancy) as today — fine for photo capture. Higher level = denser QR = harder to scan.
+- **Short-form lifespan**: these strings become printed bytes on a jar. If we rename the syntax later (say we drop `gh:` in favour of `github:`), old labels break. Lock in the syntax before printing a lot. Version-tag the short-form (`v1:vault:...`) if we want forward flexibility.
+- **Per-label metadata beyond the short-form**: do we also want a `label_id` in the QR for the local label→link index? Probably overkill — the short-form itself is the identity.
+- **QR density budget**: an 18-char short-form (`vault:kitchen/spice/paprika`) encodes fine at 70 px. A 60-char GitHub URL (`gh:aes87/brother-ptouch-automation/docs/proposals/0001-qr-context-linking.md`) is tighter. If this becomes a problem, introduce a short-hash alias mapping in a local TOML.
 
 ## Rough sizing
 
-Small feature. Resolver module + config loader + one or two template edits + tests: maybe a day. The fiddliness is in the QR fitting on 12 mm tape, not the linking logic.
+- Printing side: ~half a day. Short-form validator + config loader + `link` field on two templates + tests.
+- Skill side: ~half a day. Add the photo-decode → resolve → summarise action to the existing skill, reuse `cli-anything-obsidian` for vault access.
+- Polish + docs: a few hours.
+
+Total: ≤ 1½ days of work across both sides.
