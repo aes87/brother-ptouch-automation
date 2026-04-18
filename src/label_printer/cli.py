@@ -204,6 +204,19 @@ def scan() -> None:
     click.echo("Hardware transports not wired up yet. Printer arrives 2026-04-19.")
 
 
+@main.command()
+def wires() -> None:
+    """List known cable/wire specs and their approximate outer diameters."""
+    from label_printer.engine.wire import _AWG_OD_MM, _CABLE_OD_MM
+    click.echo("Cable keywords:")
+    width = max(len(k) for k in _CABLE_OD_MM)
+    for key in sorted(_CABLE_OD_MM):
+        click.echo(f"  {key:<{width}}  {_CABLE_OD_MM[key]:>5.1f} mm")
+    click.echo("\nAWG (insulated hookup wire):")
+    for gauge in sorted(_AWG_OD_MM, reverse=True):
+        click.echo(f"  {gauge:>3d} AWG   {_AWG_OD_MM[gauge]:>5.1f} mm")
+
+
 # --- Service mode ------------------------------------------------------------
 
 @main.command()

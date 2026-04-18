@@ -1,12 +1,16 @@
 """Layout helpers for composing labels at 180 DPI.
 
-All geometry is in dots (@180 DPI). Callers can use mm_to_dots() at the
+All geometry is in dots (@180 DPI). Callers can use ``mm_to_dots()`` at the
 boundary if they want to think in millimetres.
+
+Sizing uses ``font.getmetrics()`` (ascent + descent) rather than the tight
+glyph bbox, so reserving N dots for a line actually gives N dots including
+descender space. Drawing uses explicit anchors so positions line up with
+the reserved box instead of drifting by the font's internal em padding.
 """
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -34,7 +38,7 @@ class LabelCanvas:
     """A blank label image sized for a given tape width and length.
 
     Coordinates are dots @180 DPI. Origin is top-left; tape feeds left-to-right
-    through the printer, so `width` is the label's long axis.
+    through the printer, so ``width`` is the label's long axis.
     """
 
     tape: TapeWidth
@@ -58,22 +62,32 @@ def load_font(path: str | Path | None, size_dots: int) -> ImageFont.FreeTypeFont
     return ImageFont.truetype(str(path or DEFAULT_FONT), size=size_dots)
 
 
+def font_line_height(font: ImageFont.FreeTypeFont) -> int:
+    """Total vertical space a line of this font occupies (ascent + descent)."""
+    ascent, descent = font.getmetrics()
+    return ascent + descent
+
+
+def text_width(text: str, font: ImageFont.FreeTypeFont) -> int:
+    """Rendered width in dots."""
+    return int(font.getlength(text))
+
+
 def text_size(text: str, font: ImageFont.FreeTypeFont) -> tuple[int, int]:
-    bbox = font.getbbox(text)
-    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+    """(width, full-line-height) — reserves descender space even for text without descenders."""
+    return text_width(text, font), font_line_height(font)
 
 
 def fit_text_to_height(
     text: str, height_dots: int, font_path: str | Path | None = None, max_size: int = 200
 ) -> ImageFont.FreeTypeFont:
-    """Largest font that fits the text within `height_dots`, using binary search."""
+    """Largest font whose full line-height fits within ``height_dots``."""
     lo, hi = 6, max_size
     best = lo
     while lo <= hi:
         mid = (lo + hi) // 2
         font = load_font(font_path, mid)
-        _, h = text_size(text, font)
-        if h <= height_dots:
+        if font_line_height(font) <= height_dots:
             best = mid
             lo = mid + 1
         else:
@@ -84,14 +98,13 @@ def fit_text_to_height(
 def fit_text_to_box(
     text: str, box_w: int, box_h: int, font_path: str | Path | None = None, max_size: int = 200
 ) -> ImageFont.FreeTypeFont:
-    """Largest font that fits the text within `box_w × box_h`."""
+    """Largest font where text width <= ``box_w`` AND line-height <= ``box_h``."""
     lo, hi = 6, max_size
     best = lo
     while lo <= hi:
         mid = (lo + hi) // 2
         font = load_font(font_path, mid)
-        w, h = text_size(text, font)
-        if w <= box_w and h <= box_h:
+        if text_width(text, font) <= box_w and font_line_height(font) <= box_h:
             best = mid
             lo = mid + 1
         else:
@@ -99,17 +112,44 @@ def fit_text_to_box(
     return load_font(font_path, best)
 
 
-def draw_centered_text(
+def draw_text(
     canvas: LabelCanvas,
     text: str,
     font: ImageFont.FreeTypeFont,
-    y: int | None = None,
-    x: int | None = None,
+    x: int,
+    y: int,
+    anchor: str = "lt",
 ) -> None:
-    w, h = text_size(text, font)
-    cx = (canvas.length_dots - w) // 2 if x is None else x
-    cy = (canvas.height_dots - h) // 2 if y is None else y
-    canvas.draw.text((cx, cy), text, fill="black", font=font)
+    """Draw text with an explicit anchor.
+
+    Default ``anchor='lt'`` means (x, y) is the top-left of the glyph bbox —
+    so reserving a row that starts at y=Y draws glyphs starting exactly at Y.
+    """
+    canvas.draw.text((x, y), text, fill="black", font=font, anchor=anchor)
+
+
+def draw_row(
+    canvas: LabelCanvas,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    y: int,
+    align: str = "center",
+) -> None:
+    """Draw ``text`` horizontally laid-out on the canvas at vertical offset ``y``.
+
+    ``align`` ∈ {"center", "left", "right"}. Uses anchor-based positioning so
+    glyphs start at y exactly, with descenders ending at y + line_height.
+    """
+    if align == "center":
+        x = canvas.length_dots // 2
+        anchor = "mt"
+    elif align == "right":
+        x = canvas.length_dots - 2
+        anchor = "rt"
+    else:
+        x = 2
+        anchor = "lt"
+    draw_text(canvas, text, font, x, y, anchor)
 
 
 def draw_dashed_vline(canvas: LabelCanvas, x: int, dash: int = 4, gap: int = 4) -> None:
@@ -119,16 +159,31 @@ def draw_dashed_vline(canvas: LabelCanvas, x: int, dash: int = 4, gap: int = 4) 
         y += dash + gap
 
 
+# Backwards-compatible alias — older code used draw_centered_text(canvas, text, font, y=...)
+def draw_centered_text(
+    canvas: LabelCanvas,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    y: int | None = None,
+    x: int | None = None,
+) -> None:
+    if y is None:
+        y = (canvas.height_dots - font_line_height(font)) // 2
+    if x is not None:
+        draw_text(canvas, text, font, x, y, anchor="lt")
+    else:
+        draw_row(canvas, text, font, y, align="center")
+
+
 def split_lines_to_fit(
     text: str, width_dots: int, font: ImageFont.FreeTypeFont
 ) -> list[str]:
-    """Greedy word-wrap. Long words get truncated with '…'."""
+    """Greedy word-wrap. Long words are kept as-is (may overflow)."""
     lines: list[str] = []
-    words = text.split()
     line = ""
-    for word in words:
+    for word in text.split():
         candidate = f"{line} {word}".strip()
-        if text_size(candidate, font)[0] <= width_dots:
+        if text_width(candidate, font) <= width_dots:
             line = candidate
         else:
             if line:
@@ -139,8 +194,37 @@ def split_lines_to_fit(
     return lines or [""]
 
 
-def estimate_text_length_mm(text: str, height_dots: int, font_path: str | Path | None = None) -> float:
-    """Quickly estimate the mm length needed to print `text` at height_dots tall."""
-    font = fit_text_to_height(text, height_dots, font_path)
-    w, _ = text_size(text, font)
-    return dots_to_mm(w + math.ceil(height_dots * 0.3))  # + padding
+@dataclass(frozen=True)
+class TwoLineLayout:
+    """Vertical layout for a common 'big line on top, small line on bottom' label.
+
+    For a 70-pin (12mm) tape with defaults this gives roughly:
+
+        pad_top=2, primary=44, gap=4, secondary=18, pad_bottom=2  → 70
+    """
+
+    tape: TapeWidth
+    pad_top: int = 2
+    gap: int = 4
+    pad_bottom: int = 2
+    secondary_ratio: float = 0.28  # fraction of available height for the small line
+
+    @property
+    def available(self) -> int:
+        return geometry_for(self.tape).print_pins - self.pad_top - self.gap - self.pad_bottom
+
+    @property
+    def secondary_h(self) -> int:
+        return max(12, int(self.available * self.secondary_ratio))
+
+    @property
+    def primary_h(self) -> int:
+        return self.available - self.secondary_h
+
+    @property
+    def primary_y(self) -> int:
+        return self.pad_top
+
+    @property
+    def secondary_y(self) -> int:
+        return self.pad_top + self.primary_h + self.gap

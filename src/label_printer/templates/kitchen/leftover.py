@@ -1,4 +1,4 @@
-"""Leftover label — what + when cooked + eat-by."""
+"""Leftover label — contents + cooked date + auto-computed eat-by."""
 
 from __future__ import annotations
 
@@ -10,13 +10,14 @@ from label_printer.engine.layout import (
     DEFAULT_BOLD,
     DEFAULT_FONT,
     LabelCanvas,
-    draw_centered_text,
+    TwoLineLayout,
+    draw_row,
     fit_text_to_box,
     load_font,
     mm_to_dots,
-    text_size,
+    text_width,
 )
-from label_printer.tape import TapeWidth, geometry_for
+from label_printer.tape import TapeWidth
 from label_printer.templates.base import Template, TemplateField, TemplateMeta
 
 
@@ -26,7 +27,7 @@ class LeftoverTemplate(Template):
         name="leftover",
         summary="Leftovers: contents + cooked date + auto-computed eat-by.",
         fields=[
-            TemplateField("contents", "What's in the container.", example="chili"),
+            TemplateField("contents", "What's in the container.", example="Chili"),
             TemplateField("cooked", "Date cooked (YYYY-MM-DD).", example="2026-04-19"),
             TemplateField("eat_within_days", "Days until eat-by.", required=False, default=4),
         ],
@@ -39,21 +40,14 @@ class LeftoverTemplate(Template):
         days = int(data.get("eat_within_days") or 4)
         eat_by = cooked + timedelta(days=days)
 
-        geom = geometry_for(tape)
-        sub_h = max(10, int(geom.print_pins * 0.30))
-        name_h = geom.print_pins - sub_h - 4
-
-        name = contents.upper()
-        name_font = fit_text_to_box(name, mm_to_dots(100), name_h, DEFAULT_BOLD)
-        name_w, _ = text_size(name, name_font)
-
         sub = f"{cooked.isoformat()} → eat by {eat_by.isoformat()}"
-        sub_font = load_font(DEFAULT_FONT, sub_h)
-        sub_w, _ = text_size(sub, sub_font)
+        layout = TwoLineLayout(tape=tape)
 
-        length_dots = max(name_w, sub_w) + mm_to_dots(6)
-        canvas = LabelCanvas.create(tape, length_mm=length_dots * 25.4 / 180)
+        name_font = fit_text_to_box(contents, mm_to_dots(100), layout.primary_h, DEFAULT_BOLD)
+        sub_font = load_font(DEFAULT_FONT, layout.secondary_h - 2)
+        length = max(text_width(contents, name_font), text_width(sub, sub_font)) + mm_to_dots(6)
+        canvas = LabelCanvas.create(tape, length_mm=length * 25.4 / 180)
 
-        draw_centered_text(canvas, name, name_font, y=2)
-        draw_centered_text(canvas, sub, sub_font, y=name_h + 4)
+        draw_row(canvas, contents, name_font, layout.primary_y)
+        draw_row(canvas, sub, sub_font, layout.secondary_y)
         return canvas.image

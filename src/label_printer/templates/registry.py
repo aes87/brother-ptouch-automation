@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 
 from label_printer.templates.base import Template
 
-_PACKS = ("kitchen", "electronics", "three_d_printing")
+_PACKS = ("kitchen", "electronics", "three_d_printing", "utility")
 
 
 @dataclass
