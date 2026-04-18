@@ -1,8 +1,16 @@
 # brother-ptouch-automation
 
+[![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://aes87.github.io/brother-ptouch-automation/)
+[![CI](https://img.shields.io/github/actions/workflow/status/aes87/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/aes87/brother-ptouch-automation/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/aes87/brother-ptouch-automation?style=for-the-badge)](LICENSE)
+
 **Template-driven label automation for the Brother PT-P750W** (primary target) and its raster-compatible siblings **PT-P710BT** and **PT-E550W**. One engine, three surfaces — a CLI, an HTTP service, and a Claude Code skill — on top of a byte-exact raster encoder.
 
 Print a pantry jar, a cable flag sized to the exact cable it's wrapping, a filament spool, a QR code, or a twenty-label spice rack batch — from a terminal, a web request, or a chat message.
+
+> ### 🌐 [Live demo: browse every template →](https://aes87.github.io/brother-ptouch-automation/)
+>
+> All 36 templates across 12 packs, with live search, pack filters, field schemas, and copy-paste CLI examples for each one.
 
 ![kitchen pantry jar](docs/previews/kitchen_pantry_jar_with_icon_12mm.png)
 ![utility qr](docs/previews/utility_qr_12mm.png)
