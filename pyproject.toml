@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "label-printer"
+version = "0.1.0"
+description = "Automation flow for Brother P-touch Cube Plus (PT-P710BT) label maker"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "pillow>=10.0",
+    "packbits>=0.6",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+usb = ["pyusb>=1.2"]
+bluetooth = ["pybluez>=0.23; platform_system == 'Linux'"]
+service = ["fastapi>=0.110", "uvicorn>=0.27"]
+barcode = ["python-barcode>=0.15", "qrcode>=7.4"]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.3",
+    "brother_pt @ git+https://github.com/treideme/brother_pt.git",
+]
+
+[project.scripts]
+lp = "label_printer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+label_printer = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "hardware: requires physical PT-P710BT attached (skipped by default)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

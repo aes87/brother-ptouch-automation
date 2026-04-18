@@ -1,0 +1,131 @@
+"""Brother raster command encoder.
+
+Encodes a Pillow image into the exact byte stream accepted by a PT-P710BT.
+The output of `encode_job()` is ready to write to a transport (USB / BT /
+dry-run) with no further processing.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import packbits
+from PIL import Image
+
+from label_printer.constants import (
+    CMD_ADVANCED_MODE_PREFIX,
+    CMD_COMPRESSION_TIFF,
+    CMD_DYNAMIC_MODE_RASTER,
+    CMD_ENABLE_STATUS_NOTIFICATION,
+    CMD_INITIALIZE,
+    CMD_MARGIN_PREFIX,
+    CMD_MODE_PREFIX,
+    CMD_PRINT_AND_FEED,
+    CMD_PRINT_INFORMATION_PREFIX,
+    CMD_RASTER_LINE,
+    CMD_RASTER_ZERO_LINE,
+    DEFAULT_FEED_DOTS,
+    INVALIDATE_BYTES,
+    LINE_LENGTH_BYTES,
+    Mode,
+)
+from label_printer.engine.image import image_to_raster_bytes
+from label_printer.tape import TapeWidth
+
+
+@dataclass(frozen=True)
+class RasterOptions:
+    auto_cut: bool = True
+    mirror: bool = False
+    chaining: bool = False
+    feed_dots: int = DEFAULT_FEED_DOTS
+
+    def mode_flags(self) -> int:
+        flags = 0
+        if self.auto_cut:
+            flags |= Mode.AUTO_CUT
+        if self.mirror:
+            flags |= Mode.MIRROR_PRINTING
+        return flags
+
+    def advanced_flags(self) -> int:
+        # Bit 3 (0x08) = "no chaining". If chaining is enabled we clear it.
+        return 0x00 if self.chaining else 0x08
+
+
+def _print_information(raster_data_len: int, tape: TapeWidth) -> bytes:
+    """Build the ESC i z print-information command.
+
+    Per Brother's reference: the `n4..n7` field is `raster_data_len >> 4`
+    (i.e. the number of raster lines, given each line is 16 bytes).
+    """
+    lines = raster_data_len // LINE_LENGTH_BYTES
+    return (
+        CMD_PRINT_INFORMATION_PREFIX
+        + b"\x84\x00"
+        + int(tape).to_bytes(1, "little")
+        + b"\x00"
+        + lines.to_bytes(4, "little")
+        + b"\x00\x00"
+    )
+
+
+def _encode_raster_lines(raster: bytes) -> bytes:
+    """TIFF-PackBits-encode each 16-byte line, using the Z shortcut for zeros."""
+    buf = bytearray()
+    for i in range(0, len(raster), LINE_LENGTH_BYTES):
+        line = raster[i : i + LINE_LENGTH_BYTES]
+        if line == b"\x00" * LINE_LENGTH_BYTES:
+            buf += CMD_RASTER_ZERO_LINE
+        else:
+            packed = packbits.encode(line)
+            buf += CMD_RASTER_LINE
+            buf += len(packed).to_bytes(2, "little")
+            buf += packed
+    return bytes(buf)
+
+
+def build_prologue(raster_data_len: int, tape: TapeWidth, options: RasterOptions) -> bytes:
+    """Everything that comes before the raster data in a print job."""
+    return (
+        INVALIDATE_BYTES
+        + CMD_INITIALIZE
+        + CMD_DYNAMIC_MODE_RASTER
+        + CMD_ENABLE_STATUS_NOTIFICATION
+        + _print_information(raster_data_len, tape)
+        + CMD_MODE_PREFIX + options.mode_flags().to_bytes(1, "little")
+        + CMD_ADVANCED_MODE_PREFIX + options.advanced_flags().to_bytes(1, "little")
+        + CMD_MARGIN_PREFIX + options.feed_dots.to_bytes(2, "little")
+        + CMD_COMPRESSION_TIFF
+    )
+
+
+def encode_job(
+    image: Image.Image,
+    tape: TapeWidth,
+    options: RasterOptions | None = None,
+) -> bytes:
+    """Encode a full print job for one label.
+
+    Returns the complete byte stream — initialization, control codes, raster
+    data, and print-and-feed terminator — ready to hand to a Transport.
+    """
+    options = options or RasterOptions()
+    raster = image_to_raster_bytes(image, tape)
+    return encode_job_from_raster(raster, tape, options)
+
+
+def encode_job_from_raster(
+    raster: bytes,
+    tape: TapeWidth,
+    options: RasterOptions | None = None,
+) -> bytes:
+    """Low-level entry: already-flattened raster bytes → full command stream.
+
+    Useful for tests that want to validate the command framing independently
+    of image interpretation, and for upstream pipelines that rasterise
+    somewhere else.
+    """
+    options = options or RasterOptions()
+    prologue = build_prologue(len(raster), tape, options)
+    return prologue + _encode_raster_lines(raster) + CMD_PRINT_AND_FEED
