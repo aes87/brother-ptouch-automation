@@ -22,7 +22,7 @@ This project is a small, fast automation layer that fixes those. Templates are P
 
 ## Features
 
-- **12 templates out of the box** across kitchen, electronics, 3D-printing, and utility (QR codes, arbitrary images) — add your own with one Python file
+- **12 templates out of the box** across kitchen, electronics, 3D-printing, and utility (QR codes, arbitrary images) — add your own template, or your own whole pack as a separate pip package (see [`docs/creating-a-pack.md`](docs/creating-a-pack.md))
 - **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's circumference
 - **QR codes + images** directly from the CLI or service (no "design it in Photoshop first")
 - **Byte-exact** raster output, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI

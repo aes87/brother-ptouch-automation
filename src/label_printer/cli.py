@@ -224,6 +224,23 @@ def scan() -> None:
 
 
 @main.command()
+def packs() -> None:
+    """List installed template packs (built-in + entry-point-registered)."""
+    reg = default_registry()
+    width = max(len(p.name) for p in reg.packs.values())
+    for pack in sorted(reg.packs.values(), key=lambda p: p.name):
+        click.echo(f"  {pack.name:<{width}}  v{pack.version}  ({len(pack.templates)} templates)")
+        click.echo(f"  {' ':<{width}}  {pack.summary}")
+        if pack.homepage:
+            click.echo(f"  {' ':<{width}}  {pack.homepage}")
+    if reg.failed_packs:
+        click.echo("")
+        click.secho("failed packs (entry-point load error):", fg="red")
+        for name, reason in sorted(reg.failed_packs.items()):
+            click.echo(f"  {name}: {reason}")
+
+
+@main.command()
 def wires() -> None:
     """List known cable/wire specs and their approximate outer diameters."""
     from label_printer.engine.wire import _AWG_OD_MM, _CABLE_OD_MM
