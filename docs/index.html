@@ -156,6 +156,38 @@ section .section-lead { color: var(--fg-muted); font-size: 16px; margin: 0 0 40p
   overflow-x: auto; white-space: pre; color: var(--fg-muted);
 }
 .no-results { text-align: center; color: var(--fg-muted); padding: 40px; font-style: italic; }
+.showcase-group { margin: 40px 0 8px; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.showcase-group:first-of-type { margin-top: 24px; }
+.showcase-note { color: var(--fg-muted); margin: 0 0 20px; max-width: 720px; }
+.showcase-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px; margin-bottom: 16px;
+}
+.showcase-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: border-color 0.15s;
+}
+.showcase-card:hover { border-color: var(--accent); }
+.showcase-card .preview {
+  background: var(--tape-bg); padding: 14px 18px; text-align: center;
+}
+.showcase-card .preview img {
+  max-width: 100%; max-height: 96px;
+  image-rendering: -webkit-optimize-contrast;
+}
+.showcase-card .card-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.showcase-card .qualified {
+  font-family: ui-monospace, monospace; font-size: 14px; font-weight: 600; color: var(--fg);
+}
+.showcase-card .qualified .plus { color: var(--accent); font-weight: 500; margin-left: 4px; }
+.showcase-card p { margin: 0; color: var(--fg-muted); font-size: 13px; line-height: 1.5; }
+.showcase-card .snippet {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 12px; margin: 4px 0 0; font-family: ui-monospace, monospace;
+  font-size: 12px; color: var(--fg-muted); overflow-x: auto; white-space: pre;
+}
 .compat-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
 }
@@ -194,7 +226,7 @@ footer a { color: var(--fg-muted); }
     <p class="lead">Byte-exact raster encoder for the Brother <strong>PT-P750W</strong> (primary; PT-P710BT and PT-E550W also work). A layout library, a TOML preset format for declaring new label types, and a QR / image decorator that snaps onto any label. Adding a new category is usually ~10 lines of data, not a Python class. Driveable from a CLI, an HTTP service, or a Claude Code skill. Dry-run by default.</p>
     <div class="cta-row">
       <a class="btn primary" href="https://github.com/aes87/brother-ptouch-automation">View on GitHub →</a>
-      <a class="btn" href="#templates">Template gallery</a>
+      <a class="btn" href="#templates">See what it does</a>
       <a class="btn" href="https://github.com/aes87/brother-ptouch-automation/blob/main/docs/creating-a-pack.md">Ship your own pack</a>
     </div>
     <div class="hero-previews">
@@ -227,16 +259,125 @@ footer a { color: var(--fg-muted); }
 
 <section id="templates">
   <div class="container">
-    <h2>Template gallery</h2>
-    <p class="section-lead"><span id="visible-count">36</span> templates across 12 packs, all rendered at 180 DPI on 12mm tape. Click any card for its field schema and a ready-to-run CLI example.</p>
+    <h2>Showcase</h2>
+    <p class="section-lead">A handful of labels that show what the engine does, grouped by how they're built. Everything here renders at 180&nbsp;DPI on 12mm tape. The full catalog — 36 templates across 12 packs — lives in <code>lp list</code>; there is no point in listing them on a web page.</p>
 
-    <div class="gallery-controls">
-      <input type="text" id="search" class="search-input" placeholder="Search templates (name, summary, fields)…">
-      <div class="pack-pills" id="pack-pills"></div>
+    <h3 class="showcase-group">Declared in TOML (~10 lines of data)</h3>
+    <p class="showcase-note">Most labels are a preset entry: a name, a schema, a primary line, a secondary line. The preset loader builds the <code>Template</code> at registry init. No Python required.</p>
+    <div class="showcase-grid">
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/kitchen_pantry_jar_with_icon_12mm.png" alt="kitchen/pantry_jar with icon"></div>
+        <div class="card-body">
+          <div class="qualified">kitchen/pantry_jar</div>
+          <p>Optional Lucide icon on the left, optional expiry on the right. The `icon_field` preset key wires a named field to the icon slot.</p>
+<pre class="snippet">primary   = "{name}"
+secondary = [
+  "{purchased}",
+  { if = "expires", text = " · exp {expires}" },
+]
+icon_field = "icon"</pre>
+        </div>
+      </div>
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/three_d_printing_filament_spool_12mm.png" alt="filament_spool"></div>
+        <div class="card-body">
+          <div class="qualified">three_d_printing/filament_spool</div>
+          <p>Four required fields, two optional temps — joined with <code>·</code> separators only between parts that are actually set.</p>
+<pre class="snippet">secondary_join = " · "
+secondary = [
+  "{brand}",
+  "opened {opened}",
+  { if = "nozzle_temp", text = "N {nozzle_temp}°C" },
+  { if = "bed_temp",    text = "B {bed_temp}°C" },
+]</pre>
+        </div>
+      </div>
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/kitchen_leftover_12mm.png" alt="kitchen/leftover"></div>
+        <div class="card-body">
+          <div class="qualified">kitchen/leftover</div>
+          <p>A derived <code>eat_by</code> field computed from <code>cooked + eat_within_days</code>, so the label shows <em>both</em> dates without the caller doing the math.</p>
+<pre class="snippet">[[presets.derived]]
+name       = "eat_by"
+kind       = "date_offset"
+from_field = "cooked"
+days_field = "eat_within_days"
+
+secondary = [ "{cooked} → eat by {eat_by}" ]</pre>
+        </div>
+      </div>
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/home_inventory_moving_box_12mm.png" alt="home_inventory/moving_box"></div>
+        <div class="card-body">
+          <div class="qualified">home_inventory/moving_box</div>
+          <p>The <code>fragile</code> flag is a string field; the conditional appends <strong>· FRAGILE</strong> to the headline only when the value is truthy (and <code>"no"</code> / <code>"false"</code> / <code>"0"</code> count as falsy).</p>
+<pre class="snippet">primary_parts = [
+  "{room}",
+  { if = "fragile", text = " · FRAGILE" },
+]</pre>
+        </div>
+      </div>
     </div>
 
-    <div class="template-grid" id="template-grid"></div>
-    <div class="no-results" id="no-results" style="display:none">No templates match your filter.</div>
+    <h3 class="showcase-group">Bespoke Python (when geometry matters)</h3>
+    <p class="showcase-note">The few labels that need something the two-line mould can't express — a wrap-around wire flag, polarity icons, a GHS pictogram — stay as Python classes. Five of the 36 ship today.</p>
+    <div class="showcase-grid">
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/electronics_cable_flag_12mm.png" alt="electronics/cable_flag"></div>
+        <div class="card-body">
+          <div class="qualified">electronics/cable_flag</div>
+          <p>Two faces printed back-to-back with a wrap section in the middle sized from the cable's outer diameter (π·OD + adhesive overlap). Pass <code>wire=ethernet</code>, <code>wire=18AWG</code>, or a literal <code>wire="5mm"</code>. 40+ cable keywords and every AWG built in.</p>
+        </div>
+      </div>
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/electronics_psu_polarity_12mm.png" alt="electronics/psu_polarity"></div>
+        <div class="card-body">
+          <div class="qualified">electronics/psu_polarity</div>
+          <p>Voltage &middot; current on the headline, a centre-positive polarity ring drawn in the same raster pass. Not worth expressing as a preset — the icon placement is the whole point.</p>
+        </div>
+      </div>
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/workshop_hazard_12mm.png" alt="workshop/hazard"></div>
+        <div class="card-body">
+          <div class="qualified">workshop/hazard</div>
+          <p>GHS pictogram on the left (flammable, corrosive, toxic, etc.), hazard name + regulatory code on the right. Pictograms are SVG assets composited into the label.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="showcase-group">Decorators, not duplicates</h3>
+    <p class="showcase-note"><code>--link</code> and <code>--image</code> snap onto <em>any</em> template's output. Adding a QR or a bitmap doesn't require a new template — a cable flag, a pantry jar, a tool tag can all carry one.</p>
+    <div class="showcase-grid">
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/showcase_pantry_jar_with_link.png" alt="pantry_jar with --link"></div>
+        <div class="card-body">
+          <div class="qualified">kitchen/pantry_jar <span class="plus">+ --link</span></div>
+          <p>Same pantry preset, plus a QR that points at the canonical note in your Obsidian vault. Claude decodes the QR from a phone photo later, so the QR content is opaque to the phone's native scanner — it can be <code>vault:kitchen/sauces/sriracha</code>.</p>
+<pre class="snippet">lp render kitchen/pantry_jar \
+  -f name=SRIRACHA -f purchased=2026-04-17 \
+  --link vault:kitchen/sauces/sriracha</pre>
+        </div>
+      </div>
+
+      <div class="showcase-card">
+        <div class="preview"><img src="previews/showcase_tool_tag_with_image.png" alt="tool_tag with --image"></div>
+        <div class="card-body">
+          <div class="qualified">three_d_printing/tool_tag <span class="plus">+ --image</span></div>
+          <p>Any bitmap — a personal logo, a project sigil, an asset-ID barcode — can be composed onto the right edge. The decorator fits it to tape height, threshold-converts to monochrome, and leaves the template's own layout untouched.</p>
+<pre class="snippet">lp render three_d_printing/tool_tag \
+  -f tool=Calipers -f owner="aes / 3d-printing" \
+  --image ~/assets/logo.png</pre>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -288,1420 +429,6 @@ footer a { color: var(--fg-muted); }
   <p><a href="https://github.com/aes87/brother-ptouch-automation">GitHub</a> · <a href="https://github.com/aes87/brother-ptouch-automation/issues">Issues</a> · <a href="https://github.com/aes87/brother-ptouch-automation/blob/main/docs/implementation-plan.md">Implementation plan</a></p>
 </footer>
 
-<script>
-const MANIFEST = 
-{
-  "templates": [
-    {
-      "qualified": "kitchen/pantry_jar",
-      "pack": "kitchen",
-      "name": "pantry_jar",
-      "summary": "Pantry item with purchase date and optional expiry (+ optional icon).",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "name",
-          "description": "Item name (e.g. 'AP Flour', 'Brown Rice').",
-          "required": true,
-          "example": "AP Flour"
-        },
-        {
-          "name": "purchased",
-          "description": "Purchase date (YYYY-MM-DD).",
-          "required": true,
-          "example": "2026-04-19"
-        },
-        {
-          "name": "expires",
-          "description": "Optional expiry date.",
-          "required": false,
-          "example": "2027-04-19"
-        },
-        {
-          "name": "icon",
-          "description": "Optional Lucide icon name to paste on the left (e.g. 'wheat' for flour, 'egg' for eggs, 'leaf' for herbs). Requires the [icons] extra.",
-          "required": false,
-          "example": "wheat"
-        }
-      ],
-      "example_data": {
-        "name": "AP Flour",
-        "purchased": "2026-04-19",
-        "expires": "2027-04-19"
-      },
-      "preview": "previews/kitchen_pantry_jar_12mm.png"
-    },
-    {
-      "qualified": "kitchen/spice",
-      "pack": "kitchen",
-      "name": "spice",
-      "summary": "Spice label: name + optional origin + best-by.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "name",
-          "description": "Spice name.",
-          "required": true,
-          "example": "Smoked Paprika"
-        },
-        {
-          "name": "origin",
-          "description": "Origin / variety.",
-          "required": false,
-          "example": "Spain"
-        },
-        {
-          "name": "best_by",
-          "description": "Best-by date.",
-          "required": false,
-          "example": "2027-01"
-        }
-      ],
-      "example_data": {
-        "name": "Smoked Paprika",
-        "origin": "Spain",
-        "best_by": "2027-01"
-      },
-      "preview": "previews/kitchen_spice_12mm.png"
-    },
-    {
-      "qualified": "kitchen/leftover",
-      "pack": "kitchen",
-      "name": "leftover",
-      "summary": "Leftovers: contents + cooked date + auto-computed eat-by.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "contents",
-          "description": "What's in the container.",
-          "required": true,
-          "example": "Chili"
-        },
-        {
-          "name": "cooked",
-          "description": "Date cooked (YYYY-MM-DD).",
-          "required": true,
-          "example": "2026-04-19"
-        },
-        {
-          "name": "eat_within_days",
-          "description": "Days until eat-by.",
-          "required": false,
-          "example": null
-        }
-      ],
-      "example_data": {
-        "contents": "Chili",
-        "cooked": "2026-04-19",
-        "eat_within_days": 4
-      },
-      "preview": "previews/kitchen_leftover_12mm.png"
-    },
-    {
-      "qualified": "kitchen/freezer",
-      "pack": "kitchen",
-      "name": "freezer",
-      "summary": "Freezer label: contents + frozen date + optional portion size.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "contents",
-          "description": "What's in the package.",
-          "required": true,
-          "example": "Bolognese"
-        },
-        {
-          "name": "frozen",
-          "description": "Date frozen.",
-          "required": true,
-          "example": "2026-04-19"
-        },
-        {
-          "name": "portion",
-          "description": "Portion descriptor.",
-          "required": false,
-          "example": "2 serves"
-        }
-      ],
-      "example_data": {
-        "contents": "Bolognese",
-        "frozen": "2026-04-19",
-        "portion": "2 serves"
-      },
-      "preview": "previews/kitchen_freezer_12mm.png"
-    },
-    {
-      "qualified": "electronics/cable_flag",
-      "pack": "electronics",
-      "name": "cable_flag",
-      "summary": "Cable flag: 'source \u2192 dest' printed on both faces with a wrap gap sized to the cable.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "source",
-          "description": "Source end.",
-          "required": true,
-          "example": "NAS"
-        },
-        {
-          "name": "dest",
-          "description": "Destination end.",
-          "required": true,
-          "example": "SWITCH p3"
-        },
-        {
-          "name": "wire",
-          "description": "Cable type or gauge \u2014 e.g. 'ethernet', 'hdmi', 'usb-c', '18 AWG', '5mm'. Default: ethernet (5.5mm OD).",
-          "required": false,
-          "example": "ethernet"
-        },
-        {
-          "name": "overlap_mm",
-          "description": "Extra length beyond a full wrap for adhesive-on-adhesive closure.",
-          "required": false,
-          "example": "3.0"
-        }
-      ],
-      "example_data": {
-        "source": "NAS",
-        "dest": "SWITCH p3"
-      },
-      "preview": "previews/electronics_cable_flag_12mm.png"
-    },
-    {
-      "qualified": "electronics/component_bin",
-      "pack": "electronics",
-      "name": "component_bin",
-      "summary": "Parts-bin label: value + footprint + optional tolerance.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "value",
-          "description": "Component value.",
-          "required": true,
-          "example": "10k\u03a9"
-        },
-        {
-          "name": "footprint",
-          "description": "Package.",
-          "required": true,
-          "example": "0805"
-        },
-        {
-          "name": "tolerance",
-          "description": "Tolerance.",
-          "required": false,
-          "example": "1%"
-        }
-      ],
-      "example_data": {
-        "value": "10k\u03a9",
-        "footprint": "0805",
-        "tolerance": "1%"
-      },
-      "preview": "previews/electronics_component_bin_12mm.png"
-    },
-    {
-      "qualified": "electronics/psu_polarity",
-      "pack": "electronics",
-      "name": "psu_polarity",
-      "summary": "PSU: voltage / current / centre-positive polarity icon.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "voltage",
-          "description": "Output voltage.",
-          "required": true,
-          "example": "12V"
-        },
-        {
-          "name": "current",
-          "description": "Output current.",
-          "required": true,
-          "example": "2A"
-        },
-        {
-          "name": "polarity",
-          "description": "'+' for centre-positive, '-' for negative.",
-          "required": false,
-          "example": null
-        }
-      ],
-      "example_data": {
-        "voltage": "12V",
-        "current": "2A"
-      },
-      "preview": "previews/electronics_psu_polarity_12mm.png"
-    },
-    {
-      "qualified": "three_d_printing/filament_spool",
-      "pack": "three_d_printing",
-      "name": "filament_spool",
-      "summary": "Filament spool: material + colour + brand + opened + optional temps.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "material",
-          "description": "Filament material.",
-          "required": true,
-          "example": "PLA"
-        },
-        {
-          "name": "color",
-          "description": "Colour name.",
-          "required": true,
-          "example": "Obsidian Black"
-        },
-        {
-          "name": "brand",
-          "description": "Brand name.",
-          "required": true,
-          "example": "Bambu"
-        },
-        {
-          "name": "opened",
-          "description": "Date opened.",
-          "required": true,
-          "example": "2026-04-19"
-        },
-        {
-          "name": "nozzle_temp",
-          "description": "Nozzle temp range \u00b0C.",
-          "required": false,
-          "example": "200-220"
-        },
-        {
-          "name": "bed_temp",
-          "description": "Bed temp \u00b0C.",
-          "required": false,
-          "example": "60"
-        }
-      ],
-      "example_data": {
-        "material": "PLA",
-        "color": "Obsidian Black",
-        "brand": "Bambu",
-        "opened": "2026-04-19",
-        "nozzle_temp": "200-220",
-        "bed_temp": "60"
-      },
-      "preview": "previews/three_d_printing_filament_spool_12mm.png"
-    },
-    {
-      "qualified": "three_d_printing/print_bin",
-      "pack": "three_d_printing",
-      "name": "print_bin",
-      "summary": "Print bin label: part name + optional project + quantity.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "part",
-          "description": "Printed part name.",
-          "required": true,
-          "example": "Fan tub clip v2"
-        },
-        {
-          "name": "project",
-          "description": "Project it belongs to.",
-          "required": false,
-          "example": "fan-tub-adapter"
-        },
-        {
-          "name": "qty",
-          "description": "Quantity in the bin.",
-          "required": false,
-          "example": null
-        }
-      ],
-      "example_data": {
-        "part": "Fan tub clip v2",
-        "project": "fan-tub-adapter",
-        "qty": "4"
-      },
-      "preview": "previews/three_d_printing_print_bin_12mm.png"
-    },
-    {
-      "qualified": "three_d_printing/tool_tag",
-      "pack": "three_d_printing",
-      "name": "tool_tag",
-      "summary": "Tool tag: tool name + optional owner.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "tool",
-          "description": "Tool name.",
-          "required": true,
-          "example": "Calipers"
-        },
-        {
-          "name": "owner",
-          "description": "Owning person or project.",
-          "required": false,
-          "example": "aes / 3d-printing"
-        }
-      ],
-      "example_data": {
-        "tool": "Calipers",
-        "owner": "aes / 3d-printing"
-      },
-      "preview": "previews/three_d_printing_tool_tag_12mm.png"
-    },
-    {
-      "qualified": "utility/qr",
-      "pack": "utility",
-      "name": "qr",
-      "summary": "QR code on the left, optional caption on the right.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "data",
-          "description": "URL or text to encode.",
-          "required": true,
-          "example": "https://example.com"
-        },
-        {
-          "name": "caption",
-          "description": "Optional caption text alongside the code.",
-          "required": false,
-          "example": "Wi-Fi guest"
-        }
-      ],
-      "example_data": {
-        "data": "https://github.com/aes87/brother-ptouch-automation",
-        "caption": "repo"
-      },
-      "preview": "previews/utility_qr_12mm.png"
-    },
-    {
-      "qualified": "garden/seed_packet",
-      "pack": "garden",
-      "name": "seed_packet",
-      "summary": "Seed packet: variety + sow-by date + optional year.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "variety",
-          "description": "Cultivar or variety.",
-          "required": true,
-          "example": "Brandywine tomato"
-        },
-        {
-          "name": "sow_by",
-          "description": "Sow-by date.",
-          "required": true,
-          "example": "2026-05-15"
-        },
-        {
-          "name": "year",
-          "description": "Harvest year.",
-          "required": false,
-          "example": "2025"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon (e.g. 'sprout').",
-          "required": false,
-          "example": "sprout"
-        }
-      ],
-      "example_data": {
-        "variety": "Brandywine tomato",
-        "sow_by": "2026-05-15",
-        "year": "2025"
-      },
-      "preview": "previews/garden_seed_packet_12mm.png"
-    },
-    {
-      "qualified": "garden/plant_tag",
-      "pack": "garden",
-      "name": "plant_tag",
-      "summary": "Plant tag for a pot or seed tray.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "name",
-          "description": "Plant name.",
-          "required": true,
-          "example": "Basil"
-        },
-        {
-          "name": "planted",
-          "description": "Date planted or transplanted.",
-          "required": true,
-          "example": "2026-04-15"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon (e.g. 'leaf').",
-          "required": false,
-          "example": "leaf"
-        }
-      ],
-      "example_data": {
-        "name": "Basil",
-        "planted": "2026-04-15"
-      },
-      "preview": "previews/garden_plant_tag_12mm.png"
-    },
-    {
-      "qualified": "garden/row_marker",
-      "pack": "garden",
-      "name": "row_marker",
-      "summary": "Row marker: crop + variety for outdoor beds.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "crop",
-          "description": "Crop name.",
-          "required": true,
-          "example": "Tomato"
-        },
-        {
-          "name": "variety",
-          "description": "Variety / cultivar.",
-          "required": true,
-          "example": "Cherokee Purple"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "carrot"
-        }
-      ],
-      "example_data": {
-        "crop": "Tomato",
-        "variety": "Cherokee Purple"
-      },
-      "preview": "previews/garden_row_marker_12mm.png"
-    },
-    {
-      "qualified": "networking/patch_port",
-      "pack": "networking",
-      "name": "patch_port",
-      "summary": "Patch-panel port: port ID + VLAN + optional destination.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "port",
-          "description": "Port identifier.",
-          "required": true,
-          "example": "P12"
-        },
-        {
-          "name": "vlan",
-          "description": "VLAN ID or name.",
-          "required": true,
-          "example": "VLAN 20"
-        },
-        {
-          "name": "dest",
-          "description": "Optional destination (switch + port).",
-          "required": false,
-          "example": "sw1 g0/3"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "cable"
-        }
-      ],
-      "example_data": {
-        "port": "P12",
-        "vlan": "VLAN 20",
-        "dest": "sw1 g0/3"
-      },
-      "preview": "previews/networking_patch_port_12mm.png"
-    },
-    {
-      "qualified": "networking/rack_unit",
-      "pack": "networking",
-      "name": "rack_unit",
-      "summary": "Rack unit label: U-position + device name.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "unit",
-          "description": "U-position (e.g. 'U14').",
-          "required": true,
-          "example": "U14"
-        },
-        {
-          "name": "device",
-          "description": "Device name / model.",
-          "required": true,
-          "example": "UDM Pro"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "server"
-        }
-      ],
-      "example_data": {
-        "unit": "U14",
-        "device": "UDM Pro"
-      },
-      "preview": "previews/networking_rack_unit_12mm.png"
-    },
-    {
-      "qualified": "networking/wap_location",
-      "pack": "networking",
-      "name": "wap_location",
-      "summary": "Wireless access point: name + location.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "name",
-          "description": "AP name / model.",
-          "required": true,
-          "example": "U6-LR"
-        },
-        {
-          "name": "location",
-          "description": "Room, floor, or zone.",
-          "required": true,
-          "example": "1F office"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "wifi"
-        }
-      ],
-      "example_data": {
-        "name": "U6-LR",
-        "location": "1F office"
-      },
-      "preview": "previews/networking_wap_location_12mm.png"
-    },
-    {
-      "qualified": "workshop/hazard",
-      "pack": "workshop",
-      "name": "hazard",
-      "summary": "Hazard label: pictogram + hazard type + optional code reference.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "hazard",
-          "description": "Hazard keyword \u2014 one of: warning, flammable, biohazard, electrical, chemical, sharp, hot, cold, radiation.",
-          "required": true,
-          "example": "flammable"
-        },
-        {
-          "name": "text",
-          "description": "Hazard description.",
-          "required": true,
-          "example": "ACETONE"
-        },
-        {
-          "name": "code",
-          "description": "Optional reference code (MSDS section, GHS code\u2026).",
-          "required": false,
-          "example": "GHS02"
-        },
-        {
-          "name": "icon",
-          "description": "Override the default icon.",
-          "required": false,
-          "example": "flame"
-        }
-      ],
-      "example_data": {
-        "hazard": "flammable",
-        "text": "ACETONE",
-        "code": "GHS02"
-      },
-      "preview": "previews/workshop_hazard_12mm.png"
-    },
-    {
-      "qualified": "workshop/tool_id",
-      "pack": "workshop",
-      "name": "tool_id",
-      "summary": "Workshop tool ID: name + owner + optional project.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "name",
-          "description": "Tool name.",
-          "required": true,
-          "example": "Cordless drill"
-        },
-        {
-          "name": "owner",
-          "description": "Owner or location.",
-          "required": true,
-          "example": "aes / garage"
-        },
-        {
-          "name": "project",
-          "description": "Optional project or set.",
-          "required": false,
-          "example": "Makita set"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "wrench"
-        }
-      ],
-      "example_data": {
-        "name": "Cordless drill",
-        "owner": "aes / garage",
-        "project": "Makita"
-      },
-      "preview": "previews/workshop_tool_id_12mm.png"
-    },
-    {
-      "qualified": "workshop/torque_cal",
-      "pack": "workshop",
-      "name": "torque_cal",
-      "summary": "Torque wrench calibration: tool + range + last-cal date.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "tool",
-          "description": "Tool name.",
-          "required": true,
-          "example": "CDI 1/2\""
-        },
-        {
-          "name": "range_nm",
-          "description": "Torque range, N\u00b7m.",
-          "required": true,
-          "example": "20-100"
-        },
-        {
-          "name": "last_cal",
-          "description": "Date of last calibration (YYYY-MM-DD).",
-          "required": true,
-          "example": "2026-03-10"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "gauge"
-        }
-      ],
-      "example_data": {
-        "tool": "CDI 1/2\"",
-        "range_nm": "20-100",
-        "last_cal": "2026-03-10"
-      },
-      "preview": "previews/workshop_torque_cal_12mm.png"
-    },
-    {
-      "qualified": "workshop/first_aid",
-      "pack": "workshop",
-      "name": "first_aid",
-      "summary": "First-aid kit: contents identifier + expiry / refill date.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "kit",
-          "description": "Kit identifier.",
-          "required": true,
-          "example": "Garage kit #2"
-        },
-        {
-          "name": "expires",
-          "description": "Earliest-expiring item.",
-          "required": true,
-          "example": "2027-08"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "shield"
-        }
-      ],
-      "example_data": {
-        "kit": "Garage kit #2",
-        "expires": "2027-08"
-      },
-      "preview": "previews/workshop_first_aid_12mm.png"
-    },
-    {
-      "qualified": "home_inventory/moving_box",
-      "pack": "home_inventory",
-      "name": "moving_box",
-      "summary": "Moving / storage box: destination room + contents summary.",
-      "default_tape_mm": 24,
-      "fields": [
-        {
-          "name": "room",
-          "description": "Destination room.",
-          "required": true,
-          "example": "Kitchen"
-        },
-        {
-          "name": "contents",
-          "description": "Contents summary.",
-          "required": true,
-          "example": "pots, cutting boards"
-        },
-        {
-          "name": "fragile",
-          "description": "Optional fragility flag ('yes' to add a mark).",
-          "required": false,
-          "example": null
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "package"
-        }
-      ],
-      "example_data": {
-        "room": "Kitchen",
-        "contents": "pots, boards",
-        "fragile": "yes"
-      },
-      "preview": "previews/home_inventory_moving_box_12mm.png"
-    },
-    {
-      "qualified": "home_inventory/warranty",
-      "pack": "home_inventory",
-      "name": "warranty",
-      "summary": "Warranty label: item + expiry + optional receipt pointer.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "item",
-          "description": "Item name.",
-          "required": true,
-          "example": "Dishwasher"
-        },
-        {
-          "name": "expires",
-          "description": "Warranty expiry date.",
-          "required": true,
-          "example": "2030-09-12"
-        },
-        {
-          "name": "receipt",
-          "description": "Optional receipt pointer.",
-          "required": false,
-          "example": "vault:warranties/dishwasher"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "shield"
-        }
-      ],
-      "example_data": {
-        "item": "Dishwasher",
-        "expires": "2030-09-12"
-      },
-      "preview": "previews/home_inventory_warranty_12mm.png"
-    },
-    {
-      "qualified": "home_inventory/storage_bin",
-      "pack": "home_inventory",
-      "name": "storage_bin",
-      "summary": "Storage bin: shelf/location tag + contents summary.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "location",
-          "description": "Bin location.",
-          "required": true,
-          "example": "Basement bay 3"
-        },
-        {
-          "name": "contents",
-          "description": "Contents summary.",
-          "required": true,
-          "example": "Holiday lights"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "box"
-        }
-      ],
-      "example_data": {
-        "location": "Basement bay 3",
-        "contents": "Holiday lights"
-      },
-      "preview": "previews/home_inventory_storage_bin_12mm.png"
-    },
-    {
-      "qualified": "media/bookshelf_tag",
-      "pack": "media",
-      "name": "bookshelf_tag",
-      "summary": "Bookshelf tag: title + author + optional call number.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "title",
-          "description": "Book title.",
-          "required": true,
-          "example": "Refactoring"
-        },
-        {
-          "name": "author",
-          "description": "Author.",
-          "required": true,
-          "example": "Fowler"
-        },
-        {
-          "name": "callno",
-          "description": "Optional call number / shelf code.",
-          "required": false,
-          "example": "QA76.F69"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "book"
-        }
-      ],
-      "example_data": {
-        "title": "Refactoring",
-        "author": "Fowler",
-        "callno": "QA76.F69"
-      },
-      "preview": "previews/media_bookshelf_tag_12mm.png"
-    },
-    {
-      "qualified": "media/archive_box",
-      "pack": "media",
-      "name": "archive_box",
-      "summary": "Archive box label: identifier + retention / destroy-by date.",
-      "default_tape_mm": 18,
-      "fields": [
-        {
-          "name": "label",
-          "description": "Box identifier.",
-          "required": true,
-          "example": "2024 taxes"
-        },
-        {
-          "name": "retain_until",
-          "description": "Retention expiry.",
-          "required": true,
-          "example": "2031-04-15"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "package"
-        }
-      ],
-      "example_data": {
-        "label": "2024 taxes",
-        "retain_until": "2031-04-15"
-      },
-      "preview": "previews/media_archive_box_12mm.png"
-    },
-    {
-      "qualified": "media/cd_record",
-      "pack": "media",
-      "name": "cd_record",
-      "summary": "Music media: title + artist + optional year.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "title",
-          "description": "Album title.",
-          "required": true,
-          "example": "Kind of Blue"
-        },
-        {
-          "name": "artist",
-          "description": "Artist.",
-          "required": true,
-          "example": "Miles Davis"
-        },
-        {
-          "name": "year",
-          "description": "Optional release year.",
-          "required": false,
-          "example": "1959"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "bookmark"
-        }
-      ],
-      "example_data": {
-        "title": "Kind of Blue",
-        "artist": "Miles Davis",
-        "year": "1959"
-      },
-      "preview": "previews/media_cd_record_12mm.png"
-    },
-    {
-      "qualified": "pet/collar_backup",
-      "pack": "pet",
-      "name": "collar_backup",
-      "summary": "Pet collar backup: pet name + emergency contact.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "name",
-          "description": "Pet name.",
-          "required": true,
-          "example": "Rex"
-        },
-        {
-          "name": "contact",
-          "description": "Contact phone or info.",
-          "required": true,
-          "example": "+1 555 0100"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "paw-print"
-        }
-      ],
-      "example_data": {
-        "name": "Rex",
-        "contact": "+1 555 0100"
-      },
-      "preview": "previews/pet_collar_backup_12mm.png"
-    },
-    {
-      "qualified": "pet/med_schedule",
-      "pack": "pet",
-      "name": "med_schedule",
-      "summary": "Pet medication schedule: pet + med + dose + cadence.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "pet",
-          "description": "Pet name.",
-          "required": true,
-          "example": "Rex"
-        },
-        {
-          "name": "med",
-          "description": "Medication.",
-          "required": true,
-          "example": "Apoquel 16mg"
-        },
-        {
-          "name": "cadence",
-          "description": "How often.",
-          "required": true,
-          "example": "1\u00d7 daily"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "pill"
-        }
-      ],
-      "example_data": {
-        "pet": "Rex",
-        "med": "Apoquel 16mg",
-        "cadence": "1x daily"
-      },
-      "preview": "previews/pet_med_schedule_12mm.png"
-    },
-    {
-      "qualified": "pet/food_bowl",
-      "pack": "pet",
-      "name": "food_bowl",
-      "summary": "Feeding bowl / container: pet + food + portion.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "pet",
-          "description": "Pet name.",
-          "required": true,
-          "example": "Rex"
-        },
-        {
-          "name": "food",
-          "description": "Food identifier.",
-          "required": true,
-          "example": "Acana Adult"
-        },
-        {
-          "name": "portion",
-          "description": "Portion / amount.",
-          "required": true,
-          "example": "1 cup"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "paw-print"
-        }
-      ],
-      "example_data": {
-        "pet": "Rex",
-        "food": "Acana Adult",
-        "portion": "1 cup"
-      },
-      "preview": "previews/pet_food_bowl_12mm.png"
-    },
-    {
-      "qualified": "travel/luggage_tag",
-      "pack": "travel",
-      "name": "luggage_tag",
-      "summary": "Luggage / gear tag: name + contact (phone or email).",
-      "default_tape_mm": 18,
-      "fields": [
-        {
-          "name": "name",
-          "description": "Owner name.",
-          "required": true,
-          "example": "aes87"
-        },
-        {
-          "name": "contact",
-          "description": "Phone or email.",
-          "required": true,
-          "example": "aesthe@example.com"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "luggage"
-        }
-      ],
-      "example_data": {
-        "name": "aes87",
-        "contact": "aesthe@example.com"
-      },
-      "preview": "previews/travel_luggage_tag_12mm.png"
-    },
-    {
-      "qualified": "travel/gear_bag",
-      "pack": "travel",
-      "name": "gear_bag",
-      "summary": "Gear bag: bag identifier + purpose / trip.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "bag",
-          "description": "Bag identifier.",
-          "required": true,
-          "example": "Peak Design 30L"
-        },
-        {
-          "name": "purpose",
-          "description": "Trip / use-case.",
-          "required": true,
-          "example": "Banff 2026"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "briefcase"
-        }
-      ],
-      "example_data": {
-        "bag": "Peak Design 30L",
-        "purpose": "Banff 2026"
-      },
-      "preview": "previews/travel_gear_bag_12mm.png"
-    },
-    {
-      "qualified": "travel/power_bank",
-      "pack": "travel",
-      "name": "power_bank",
-      "summary": "Power bank: capacity + last-charged date.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "capacity_mah",
-          "description": "Capacity in mAh.",
-          "required": true,
-          "example": "20000"
-        },
-        {
-          "name": "charged",
-          "description": "Last charged date.",
-          "required": true,
-          "example": "2026-04-15"
-        },
-        {
-          "name": "model",
-          "description": "Optional model name.",
-          "required": false,
-          "example": "Anker 737"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "battery"
-        }
-      ],
-      "example_data": {
-        "capacity_mah": "20000",
-        "charged": "2026-04-15",
-        "model": "Anker 737"
-      },
-      "preview": "previews/travel_power_bank_12mm.png"
-    },
-    {
-      "qualified": "calibration/instrument_cal",
-      "pack": "calibration",
-      "name": "instrument_cal",
-      "summary": "Instrument calibration: instrument + next-due date + owner.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "instrument",
-          "description": "Instrument name.",
-          "required": true,
-          "example": "Fluke 87V"
-        },
-        {
-          "name": "next_due",
-          "description": "Next calibration due.",
-          "required": true,
-          "example": "2027-05-01"
-        },
-        {
-          "name": "owner",
-          "description": "Optional owner / lab.",
-          "required": false,
-          "example": "QA lab"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "gauge"
-        }
-      ],
-      "example_data": {
-        "instrument": "Fluke 87V",
-        "next_due": "2027-05-01",
-        "owner": "QA lab"
-      },
-      "preview": "previews/calibration_instrument_cal_12mm.png"
-    },
-    {
-      "qualified": "calibration/cert_id",
-      "pack": "calibration",
-      "name": "cert_id",
-      "summary": "Calibration certificate reference: cert number + issuer.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "cert_no",
-          "description": "Certificate number.",
-          "required": true,
-          "example": "CAL-2026-00421"
-        },
-        {
-          "name": "issuer",
-          "description": "Issuing lab / standard.",
-          "required": true,
-          "example": "ISO/IEC 17025"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "file-text"
-        }
-      ],
-      "example_data": {
-        "cert_no": "CAL-2026-00421",
-        "issuer": "ISO/IEC 17025"
-      },
-      "preview": "previews/calibration_cert_id_12mm.png"
-    },
-    {
-      "qualified": "calibration/thermometer_cal",
-      "pack": "calibration",
-      "name": "thermometer_cal",
-      "summary": "Thermometer calibration: instrument + last ice/steam check.",
-      "default_tape_mm": 12,
-      "fields": [
-        {
-          "name": "instrument",
-          "description": "Thermometer identifier.",
-          "required": true,
-          "example": "Thermapen ONE"
-        },
-        {
-          "name": "ice_point_c",
-          "description": "Ice-point reading \u00b0C.",
-          "required": true,
-          "example": "0.1"
-        },
-        {
-          "name": "checked",
-          "description": "Date of last check.",
-          "required": true,
-          "example": "2026-03-28"
-        },
-        {
-          "name": "icon",
-          "description": "Optional icon.",
-          "required": false,
-          "example": "thermometer"
-        }
-      ],
-      "example_data": {
-        "instrument": "Thermapen ONE",
-        "ice_point_c": "0.1",
-        "checked": "2026-03-28"
-      },
-      "preview": "previews/calibration_thermometer_cal_12mm.png"
-    }
-  ],
-  "packs": {
-    "kitchen": {
-      "version": "0.1.0",
-      "summary": "Kitchen labels \u2014 pantry jars, spice rack, leftovers, freezer."
-    },
-    "electronics": {
-      "version": "0.1.0",
-      "summary": "Electronics labels \u2014 cable flags, parts bins, PSU polarity."
-    },
-    "three_d_printing": {
-      "version": "0.1.0",
-      "summary": "3D-printing labels \u2014 filament spools, print bins, tool tags."
-    },
-    "utility": {
-      "version": "0.1.0",
-      "summary": "Utility labels \u2014 QR codes, arbitrary images."
-    },
-    "garden": {
-      "version": "0.1.0",
-      "summary": "Garden labels \u2014 seed packets, plant tags, row markers."
-    },
-    "networking": {
-      "version": "0.1.0",
-      "summary": "Network labels \u2014 patch ports, rack units, access points."
-    },
-    "workshop": {
-      "version": "0.1.0",
-      "summary": "Workshop labels \u2014 hazards, tool IDs, torque calibration, first-aid."
-    },
-    "home_inventory": {
-      "version": "0.1.0",
-      "summary": "Home-inventory labels \u2014 moving boxes, warranties, storage bins."
-    },
-    "media": {
-      "version": "0.1.0",
-      "summary": "Media labels \u2014 bookshelf tags, archive boxes, CDs/records."
-    },
-    "pet": {
-      "version": "0.1.0",
-      "summary": "Pet labels \u2014 collar backups, medication schedules, food bowls."
-    },
-    "travel": {
-      "version": "0.1.0",
-      "summary": "Travel labels \u2014 luggage tags, gear bags, power banks."
-    },
-    "calibration": {
-      "version": "0.1.0",
-      "summary": "Calibration labels \u2014 instrument cal, cert IDs, thermometer checks."
-    }
-  }
-}
-
-;
-
-const grid = document.getElementById('template-grid');
-const searchInput = document.getElementById('search');
-const pillsBox = document.getElementById('pack-pills');
-const visibleCount = document.getElementById('visible-count');
-const noResults = document.getElementById('no-results');
-let activePack = 'all';
-let searchQuery = '';
-
-function renderPills() {
-  const packs = ['all', ...Object.keys(MANIFEST.packs).sort()];
-  const counts = {};
-  for (const t of MANIFEST.templates) counts[t.pack] = (counts[t.pack] || 0) + 1;
-  counts.all = MANIFEST.templates.length;
-  pillsBox.innerHTML = '';
-  for (const p of packs) {
-    const pill = document.createElement('button');
-    pill.className = 'pack-pill' + (p === activePack ? ' active' : '');
-    pill.innerHTML = `${p}<span class="count">${counts[p] || 0}</span>`;
-    pill.onclick = () => { activePack = p; renderPills(); renderGrid(); };
-    pillsBox.appendChild(pill);
-  }
-}
-
-function cliExample(t) {
-  const parts = [`lp render ${t.qualified} \\`];
-  const entries = Object.entries(t.example_data);
-  entries.forEach(([k, v], i) => {
-    const last = i === entries.length - 1;
-    const val = /\s/.test(String(v)) ? `"${v}"` : v;
-    parts.push(`  -f ${k}=${val}${last ? '' : ' \\'}`);
-  });
-  return parts.join('\n');
-}
-
-function renderGrid() {
-  const q = searchQuery.toLowerCase();
-  const filtered = MANIFEST.templates.filter(t => {
-    if (activePack !== 'all' && t.pack !== activePack) return false;
-    if (!q) return true;
-    const haystack = [t.qualified, t.summary,
-      ...t.fields.map(f => f.name + ' ' + f.description)].join(' ').toLowerCase();
-    return haystack.includes(q);
-  });
-  visibleCount.textContent = filtered.length;
-  grid.innerHTML = '';
-  if (!filtered.length) { noResults.style.display = 'block'; return; }
-  noResults.style.display = 'none';
-  for (const t of filtered) {
-    const card = document.createElement('div');
-    card.className = 'template-card';
-    card.innerHTML = `
-      <div class="head">
-        <div class="name"><span class="pack">${t.pack}/</span>${t.name}</div>
-        <div class="tape">${t.default_tape_mm}mm default</div>
-      </div>
-      <div class="summary">${t.summary}</div>
-      <div class="preview"><img src="${t.preview}" alt="${t.qualified} preview" loading="lazy"></div>
-      <details>
-        <summary>field schema + CLI example</summary>
-        <div class="fields">
-          ${t.fields.map(f => `
-            <div class="field">
-              <span class="field-name">${f.name}</span>
-              ${f.required ? '<span class="field-req">required</span>' : '<span class="field-opt">optional</span>'}
-              <div class="field-desc">${f.description}</div>
-              ${f.example ? `<div class="field-example">e.g. ${JSON.stringify(f.example)}</div>` : ''}
-            </div>`).join('')}
-        </div>
-        <pre class="cli-example">${cliExample(t).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-      </details>`;
-    grid.appendChild(card);
-  }
-}
-
-searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderGrid(); });
-renderPills();
-renderGrid();
-</script>
 
 </body>
 </html>
