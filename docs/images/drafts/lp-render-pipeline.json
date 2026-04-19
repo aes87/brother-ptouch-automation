@@ -1,0 +1,47 @@
+{
+  "template_type": "architecture",
+  "style": 8,
+  "width": 1280,
+  "height": 760,
+  "title": "Render Pipeline",
+  "subtitle": "Template → Pillow → mono → fit → 128-pin raster bytes → command stream",
+  "nodes": [
+    { "id": "tpl", "kind": "double_rect", "x": 40,  "y": 200, "width": 240, "height": 80, "label": "Template.render", "sublabel": "data · tape", "type_label": "ENTRY", "stroke": "#e6a562" },
+    { "id": "img", "kind": "rect",        "x": 320, "y": 200, "width": 220, "height": 80, "label": "Pillow Image", "sublabel": "RGB · tape-sized" },
+    { "id": "mon", "kind": "rect",        "x": 580, "y": 200, "width": 220, "height": 80, "label": "to_monochrome", "sublabel": "threshold 128" },
+    { "id": "fit", "kind": "rect",        "x": 840, "y": 200, "width": 220, "height": 80, "label": "fit_to_tape", "sublabel": "check dimensions" },
+    { "id": "rast","kind": "double_rect", "x": 1100,"y": 200, "width": 160, "height": 80, "label": "raster bytes", "sublabel": "128-pin · MSB-first", "type_label": "ENCODE" },
+
+    { "id": "ln",  "kind": "double_rect", "x": 540, "y": 380, "width": 240, "height": 80, "label": "per 16-byte line", "sublabel": "decision", "type_label": "BRANCH", "stroke": "#e6a562" },
+    { "id": "z",   "kind": "rect",        "x": 220, "y": 480, "width": 240, "height": 80, "label": "0x5A", "sublabel": "Z-shortcut · all-zero line", "stroke": "#6fd1b4" },
+    { "id": "pb",  "kind": "rect",        "x": 820, "y": 480, "width": 280, "height": 80, "label": "0x47 + len + packbits", "sublabel": "TIFF compression" },
+
+    { "id": "cs",  "kind": "rect",        "x": 540, "y": 580, "width": 240, "height": 60, "label": "command stream" },
+    { "id": "out", "kind": "double_rect", "x": 320, "y": 660, "width": 680, "height": 80, "label": "prologue + lines + 0x1A", "sublabel": "init · mode · info · margin · raster · print & feed", "type_label": "OUT", "stroke": "#e6a562" }
+  ],
+  "arrows": [
+    { "source": "tpl", "target": "img",  "source_port": "right", "target_port": "left", "flow": "data" },
+    { "source": "img", "target": "mon",  "source_port": "right", "target_port": "left", "flow": "data" },
+    { "source": "mon", "target": "fit",  "source_port": "right", "target_port": "left", "flow": "data" },
+    { "source": "fit", "target": "rast", "source_port": "right", "target_port": "left", "flow": "data" },
+
+    { "source": "rast","target": "ln",   "source_port": "bottom", "target_port": "top", "flow": "control", "route_points": [[1180, 320], [660, 320]] },
+
+    { "source": "ln",  "target": "z",    "source_port": "bottom", "target_port": "top", "flow": "write",   "label": "all zero", "route_points": [[660, 470], [340, 470]] },
+    { "source": "ln",  "target": "pb",   "source_port": "bottom", "target_port": "top", "flow": "data",    "label": "non-zero", "route_points": [[660, 470], [960, 470]] },
+
+    { "source": "z",   "target": "cs",   "source_port": "bottom", "target_port": "top", "flow": "data" },
+    { "source": "pb",  "target": "cs",   "source_port": "bottom", "target_port": "top", "flow": "data" },
+
+    { "source": "cs",  "target": "out",  "source_port": "bottom", "target_port": "top", "flow": "data" }
+  ],
+  "legend": [
+    { "flow": "data",    "label": "Image / byte flow" },
+    { "flow": "control", "label": "Per-line dispatch" },
+    { "flow": "write",   "label": "Z-shortcut path" }
+  ],
+  "legend_position": "bottom-left",
+  "legend_x": 40,
+  "legend_y": 700,
+  "legend_box": false
+}

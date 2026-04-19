@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 920" font-family="'Inter','Noto Sans','DejaVu Sans',sans-serif">
+  <defs>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.08 0"/>
+    </filter>
+    <radialGradient id="topGlow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#e6a562" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#e6a562" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="arrFwd" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e6a562"/>
+    </marker>
+    <marker id="arrRsp" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6fd1b4"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="920" fill="#15151e"/>
+  <rect width="1280" height="380" fill="url(#topGlow)"/>
+  <rect width="1280" height="920" filter="url(#grain)" opacity="0.6"/>
+
+  <text x="640" y="78" text-anchor="middle" font-family="'Playfair Display','Noto Serif Display','DejaVu Serif',Georgia,serif" font-weight="700" font-size="44" fill="#f5efe0">Print a Label — End to End</text>
+  <text x="640" y="112" text-anchor="middle" font-size="11" fill="#e6a562" letter-spacing="3.5" font-weight="600" text-transform="uppercase">USER · SKILL · REGISTRY · ENGINE · TRANSPORT · PRINTER</text>
+
+  <!-- Participant headers -->
+  <g>
+    <rect x="40"   y="160" width="160" height="60" rx="8" fill="#1f1e28" stroke="#e6a562" stroke-width="1.5"/>
+    <text x="120"  y="186" text-anchor="middle" font-size="10" letter-spacing="2" fill="#e6a562" font-weight="700">ACTOR</text>
+    <text x="120"  y="206" text-anchor="middle" font-size="15" fill="#f5efe0" font-weight="600">User</text>
+
+    <rect x="240"  y="160" width="160" height="60" rx="8" fill="#1f1e28" stroke="rgba(245,239,224,0.18)"/>
+    <text x="320"  y="186" text-anchor="middle" font-size="10" letter-spacing="2" fill="#b5b3a8" font-weight="700">CLIENT</text>
+    <text x="320"  y="206" text-anchor="middle" font-size="15" fill="#f5efe0" font-weight="600">/label-printer</text>
+
+    <rect x="440"  y="160" width="160" height="60" rx="8" fill="#1f1e28" stroke="rgba(245,239,224,0.18)"/>
+    <text x="520"  y="186" text-anchor="middle" font-size="10" letter-spacing="2" fill="#b5b3a8" font-weight="700">CORE</text>
+    <text x="520"  y="206" text-anchor="middle" font-size="15" fill="#f5efe0" font-weight="600">Registry</text>
+
+    <rect x="640"  y="160" width="160" height="60" rx="8" fill="#1f1e28" stroke="rgba(245,239,224,0.18)"/>
+    <text x="720"  y="186" text-anchor="middle" font-size="10" letter-spacing="2" fill="#b5b3a8" font-weight="700">CORE</text>
+    <text x="720"  y="206" text-anchor="middle" font-size="15" fill="#f5efe0" font-weight="600">Engine</text>
+
+    <rect x="840"  y="160" width="160" height="60" rx="8" fill="#1f1e28" stroke="#6fd1b4" stroke-width="1.5"/>
+    <text x="920"  y="186" text-anchor="middle" font-size="10" letter-spacing="2" fill="#6fd1b4" font-weight="700">TX</text>
+    <text x="920"  y="206" text-anchor="middle" font-size="15" fill="#f5efe0" font-weight="600">Transport</text>
+
+    <rect x="1040" y="160" width="200" height="60" rx="8" fill="#1f1e28" stroke="#e6a562" stroke-width="1.5"/>
+    <text x="1140" y="186" text-anchor="middle" font-size="10" letter-spacing="2" fill="#e6a562" font-weight="700">PRINTER</text>
+    <text x="1140" y="206" text-anchor="middle" font-size="15" fill="#f5efe0" font-weight="600">PT-P750W</text>
+  </g>
+
+  <!-- Lifelines -->
+  <g stroke="rgba(245,239,224,0.12)" stroke-width="1" stroke-dasharray="4 4">
+    <line x1="120"  y1="220" x2="120"  y2="880"/>
+    <line x1="320"  y1="220" x2="320"  y2="880"/>
+    <line x1="520"  y1="220" x2="520"  y2="880"/>
+    <line x1="720"  y1="220" x2="720"  y2="880"/>
+    <line x1="920"  y1="220" x2="920"  y2="880"/>
+    <line x1="1140" y1="220" x2="1140" y2="880"/>
+  </g>
+
+  <!-- Messages — 16 numbered steps -->
+  <g font-size="12" fill="#d4cfbf">
+
+    <!-- 1: User → Skill (fwd) -->
+    <text x="220" y="262" text-anchor="middle" font-size="11" fill="#c9c5b6">"label this jar: sriracha, opened 2026-04-10"</text>
+    <line x1="124" y1="270" x2="316" y2="270" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="120" cy="270" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="120" y="274" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">1</text>
+
+    <!-- 2: Skill → Registry (fwd) -->
+    <text x="420" y="298" text-anchor="middle" font-size="11" fill="#c9c5b6">find template for "jar"</text>
+    <line x1="324" y1="306" x2="516" y2="306" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="320" cy="306" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="320" y="310" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">2</text>
+
+    <!-- 3: Registry → Skill (rsp, dashed) -->
+    <text x="420" y="334" text-anchor="middle" font-size="11" fill="#c9c5b6">kitchen/pantry_jar + field schema</text>
+    <line x1="516" y1="342" x2="324" y2="342" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrRsp)"/>
+    <circle cx="520" cy="342" r="11" fill="#15151e" stroke="#6fd1b4"/>
+    <text x="520" y="346" text-anchor="middle" font-size="10" fill="#6fd1b4" font-weight="700">3</text>
+
+    <!-- 4: Skill → Engine (fwd) -->
+    <text x="520" y="370" text-anchor="middle" font-size="11" fill="#c9c5b6">render(validate(fields), tape=12mm)</text>
+    <line x1="324" y1="378" x2="716" y2="378" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="320" cy="378" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="320" y="382" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">4</text>
+
+    <!-- 5: Engine → Skill (rsp) -->
+    <text x="520" y="406" text-anchor="middle" font-size="11" fill="#c9c5b6">PNG preview</text>
+    <line x1="716" y1="414" x2="324" y2="414" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrRsp)"/>
+    <circle cx="720" cy="414" r="11" fill="#15151e" stroke="#6fd1b4"/>
+    <text x="720" y="418" text-anchor="middle" font-size="10" fill="#6fd1b4" font-weight="700">5</text>
+
+    <!-- 6: Skill → User (fwd) -->
+    <text x="220" y="442" text-anchor="middle" font-size="11" fill="#c9c5b6">show preview · confirm?</text>
+    <line x1="316" y1="450" x2="124" y2="450" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="320" cy="450" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="320" y="454" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">6</text>
+
+    <!-- 7: User → Skill (rsp) -->
+    <text x="220" y="478" text-anchor="middle" font-size="11" fill="#c9c5b6">yes</text>
+    <line x1="124" y1="486" x2="316" y2="486" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrRsp)"/>
+    <circle cx="120" cy="486" r="11" fill="#15151e" stroke="#6fd1b4"/>
+    <text x="120" y="490" text-anchor="middle" font-size="10" fill="#6fd1b4" font-weight="700">7</text>
+
+    <!-- 8: Skill → Transport (fwd) -->
+    <text x="620" y="514" text-anchor="middle" font-size="11" fill="#c9c5b6">query_status()</text>
+    <line x1="324" y1="522" x2="916" y2="522" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="320" cy="522" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="320" y="526" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">8</text>
+
+    <!-- 9: Transport → Printer (fwd) -->
+    <text x="1030" y="550" text-anchor="middle" font-size="11" fill="#c9c5b6">ESC i S</text>
+    <line x1="924" y1="558" x2="1136" y2="558" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="920" cy="558" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="920" y="562" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">9</text>
+
+    <!-- 10: Printer → Transport (rsp) -->
+    <text x="1030" y="586" text-anchor="middle" font-size="11" fill="#c9c5b6">32-byte status packet</text>
+    <line x1="1136" y1="594" x2="924" y2="594" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrRsp)"/>
+    <circle cx="1140" cy="594" r="11" fill="#15151e" stroke="#6fd1b4"/>
+    <text x="1140" y="598" text-anchor="middle" font-size="10" fill="#6fd1b4" font-weight="700">10</text>
+
+    <!-- 11: Transport → Skill (rsp, long) -->
+    <text x="620" y="622" text-anchor="middle" font-size="11" fill="#c9c5b6">PrinterStatus(12mm white tape, no errors)</text>
+    <line x1="916" y1="630" x2="324" y2="630" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrRsp)"/>
+    <circle cx="920" cy="630" r="11" fill="#15151e" stroke="#6fd1b4"/>
+    <text x="920" y="634" text-anchor="middle" font-size="10" fill="#6fd1b4" font-weight="700">11</text>
+
+    <!-- 12: Skill → Engine (fwd) -->
+    <text x="520" y="658" text-anchor="middle" font-size="11" fill="#c9c5b6">encode_job(image, tape)</text>
+    <line x1="324" y1="666" x2="716" y2="666" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="320" cy="666" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="320" y="670" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">12</text>
+
+    <!-- 13: Engine → Skill (rsp) -->
+    <text x="520" y="694" text-anchor="middle" font-size="11" fill="#c9c5b6">raster command bytes</text>
+    <line x1="716" y1="702" x2="324" y2="702" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrRsp)"/>
+    <circle cx="720" cy="702" r="11" fill="#15151e" stroke="#6fd1b4"/>
+    <text x="720" y="706" text-anchor="middle" font-size="10" fill="#6fd1b4" font-weight="700">13</text>
+
+    <!-- 14: Skill → Transport (fwd) -->
+    <text x="620" y="730" text-anchor="middle" font-size="11" fill="#c9c5b6">send(bytes)</text>
+    <line x1="324" y1="738" x2="916" y2="738" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="320" cy="738" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="320" y="742" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">14</text>
+
+    <!-- 15: Transport → Printer (fwd) -->
+    <text x="1030" y="766" text-anchor="middle" font-size="11" fill="#c9c5b6">ESC @ · init · raster · 1A</text>
+    <line x1="924" y1="774" x2="1136" y2="774" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="920" cy="774" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="920" y="778" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">15</text>
+
+    <!-- 16: Printer → User (fwd, very long, end-to-end) -->
+    <text x="630" y="802" text-anchor="middle" font-size="11" fill="#c9c5b6">label on tape</text>
+    <line x1="1136" y1="810" x2="124" y2="810" stroke="#e6a562" stroke-width="1.4" marker-end="url(#arrFwd)"/>
+    <circle cx="1140" cy="810" r="11" fill="#15151e" stroke="#e6a562"/>
+    <text x="1140" y="814" text-anchor="middle" font-size="10" fill="#e6a562" font-weight="700">16</text>
+  </g>
+
+  <!-- Legend strip -->
+  <g transform="translate(40, 870)">
+    <line x1="0" y1="0" x2="36" y2="0" stroke="#e6a562" stroke-width="1.4"/>
+    <text x="48" y="4" font-size="12" fill="#d4cfbf">Forward request</text>
+
+    <line x1="220" y1="0" x2="256" y2="0" stroke="#6fd1b4" stroke-width="1.2" stroke-dasharray="5 4"/>
+    <text x="268" y="4" font-size="12" fill="#d4cfbf">Response</text>
+  </g>
+</svg>

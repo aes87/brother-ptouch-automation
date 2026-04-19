@@ -1,7 +1,7 @@
 # Label Printer
 
 ## Overview
-Automation flow for generating labels on a Brother P-touch Cube Plus (PT-P710BT). Produces a diversity of label styles — kitchen, electronics, 3D printing, general household — from a single Python engine, callable by humans (CLI) and by other projects (Claude Code skill, Telegram channel, life-planner, etc.). The printer stays connected to one machine (currently this PC, possibly a server later); clients talk to a local print service.
+Automation flow for generating labels on a Brother PT-P750W (primary target; PT-P710BT "Cube Plus" and PT-E550W also supported via the same raster command set). Produces a diversity of label styles — kitchen, electronics, 3D printing, general household — from a single Python engine, callable by humans (CLI) and by other projects (Claude Code skill, Telegram channel, life-planner, etc.). The printer stays connected to one machine (currently this PC, possibly a server later); clients talk to a local print service.
 
 ## Tech Stack
 - Language: Python 3.11+

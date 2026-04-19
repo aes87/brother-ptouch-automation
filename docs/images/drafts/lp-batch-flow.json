@@ -1,0 +1,31 @@
+{
+  "template_type": "architecture",
+  "style": 8,
+  "width": 1280,
+  "height": 580,
+  "title": "Batch Print Flow",
+  "subtitle": "spec.json → validated batch → one strip with half-cuts between labels",
+  "nodes": [
+    { "id": "spec",   "kind": "rect",        "x": 40,  "y": 200, "width": 200, "height": 80, "label": "spec.json", "sublabel": "[label1, label2, …]" },
+    { "id": "cli",    "kind": "rect",        "x": 280, "y": 200, "width": 180, "height": 80, "label": "lp batch" },
+    { "id": "val",    "kind": "rect",        "x": 500, "y": 200, "width": 200, "height": 80, "label": "validate", "sublabel": "same tape width" },
+    { "id": "rend",   "kind": "rect",        "x": 740, "y": 200, "width": 200, "height": 80, "label": "render each", "sublabel": "→ Pillow Image" },
+    { "id": "enc",    "kind": "double_rect", "x": 980, "y": 200, "width": 240, "height": 80, "label": "encode_batch", "sublabel": "raster command bytes", "type_label": "ENCODER", "stroke": "#e6a562" },
+
+    { "id": "prol",   "kind": "rect",        "x": 40,  "y": 360, "width": 200, "height": 100, "label": "session prologue", "sublabel": "init · mode · info · margin · once" },
+    { "id": "loop",   "kind": "double_rect", "x": 290, "y": 360, "width": 460, "height": 100, "label": "per-page commands", "sublabel": "print_information + mode + advanced + margin + compression + raster + 0x0C (next page)", "type_label": "REPEAT" },
+    { "id": "final",  "kind": "rect",        "x": 800, "y": 360, "width": 220, "height": 100, "label": "last page", "sublabel": "+ 0x1A · print & feed" },
+    { "id": "ptr",    "kind": "double_rect", "x": 1060,"y": 360, "width": 180, "height": 100, "label": "PT-P750W", "sublabel": "one strip · half-cuts", "type_label": "PRINTER", "stroke": "#e6a562" }
+  ],
+  "arrows": [
+    { "source": "spec", "target": "cli",  "source_port": "right", "target_port": "left", "flow": "data" },
+    { "source": "cli",  "target": "val",  "source_port": "right", "target_port": "left", "flow": "control" },
+    { "source": "val",  "target": "rend", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "source": "rend", "target": "enc",  "source_port": "right", "target_port": "left", "flow": "data" },
+
+    { "source": "enc",  "target": "prol", "source_port": "bottom", "target_port": "top", "flow": "control", "route_points": [[1100, 320], [140, 320]] },
+    { "source": "prol", "target": "loop", "source_port": "right",  "target_port": "left", "flow": "data" },
+    { "source": "loop", "target": "final","source_port": "right",  "target_port": "left", "flow": "data" },
+    { "source": "final","target": "ptr",  "source_port": "right",  "target_port": "left", "flow": "data" }
+  ]
+}

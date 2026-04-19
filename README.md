@@ -58,43 +58,7 @@ This is a small, fast automation layer that fixes those. Templates are Python cl
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph clients["clients"]
-        CLI["lp CLI"]
-        Skill["/label-printer<br/>Claude Code skill"]
-        HTTP["HTTP service<br/>(any LAN client)"]
-    end
-
-    subgraph engine["label_printer engine"]
-        Registry["template registry<br/>built-in + entry-point packs"]
-        Renderer["template.render<br/>→ Pillow Image"]
-        RasterEnc["raster encoder<br/>128-pin aligned<br/>TIFF-PackBits<br/>half-cut, chaining"]
-        Status["status parser<br/>tape-match gate"]
-    end
-
-    subgraph transports["transports"]
-        Dryrun["DryRunTransport<br/>(default)"]
-        USB["USB<br/>(phase 5)"]
-        BT["Bluetooth SPP<br/>(phase 5)"]
-    end
-
-    Printer((("PT-P750W<br/>180 DPI · 128 pins<br/>half-cut")))
-
-    CLI --> Registry
-    Skill --> Registry
-    HTTP --> Registry
-    Registry --> Renderer
-    Renderer --> RasterEnc
-    RasterEnc --> Dryrun
-    RasterEnc --> USB
-    RasterEnc --> BT
-    USB -.query.-> Status
-    BT -.query.-> Status
-    Status -.-> RasterEnc
-    USB --> Printer
-    BT --> Printer
-```
+![Architecture — three client surfaces (lp CLI, /label-printer Claude Code skill, HTTP service) all feed the template registry inside the engine. Registry routes to template.render (→ Pillow Image), then the raster encoder (128-pin aligned, TIFF-PackBits, half-cut, chaining), which sends bytes through one of three transports (DryRunTransport default, USB and Bluetooth SPP coming in phase 5). USB and Bluetooth query the status parser as a tape-match gate before encoding. The PT-P750W on the right is the primary printer (180 DPI, 128 pins, half-cut).](./docs/images/lp-architecture.png)
 
 **Key separation**: templates produce a Pillow `Image` sized for the loaded tape; the engine converts it to a Brother raster command stream; transports only care about `send(bytes)`. Clients never touch transport code. Swapping from a local printer to a network service or migrating to a different host is zero-template-change work.
 
@@ -262,63 +226,15 @@ Claude picks the right template, proposes fields, dry-renders a PNG for you to r
 
 ## Job lifecycle
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User
-    participant Skill as /label-printer
-    participant Registry
-    participant Engine
-    participant Transport
-    participant Printer as PT-P750W
-
-    User->>Skill: "label this jar: sriracha, opened 2026-04-10"
-    Skill->>Registry: find template for "jar"
-    Registry-->>Skill: kitchen/pantry_jar + field schema
-    Skill->>Engine: render(validate(fields), tape=12mm)
-    Engine-->>Skill: PNG preview
-    Skill->>User: show preview, confirm?
-    User-->>Skill: yes
-    Skill->>Transport: query_status()
-    Transport->>Printer: ESC i S
-    Printer-->>Transport: 32-byte status packet
-    Transport-->>Skill: PrinterStatus(12mm white tape, no errors)
-    Skill->>Engine: encode_job(image, tape)
-    Engine-->>Skill: raster command bytes
-    Skill->>Transport: send(bytes)
-    Transport->>Printer: ESC @, init, raster, 1A
-    Printer-->>User: label on tape
-```
+![Print-a-label sequence — 16 numbered messages across User, /label-printer skill, Registry, Engine, Transport, and PT-P750W. Skill resolves template via Registry, gets PNG preview from Engine, asks user to confirm, queries printer status (ESC i S → 32-byte packet), encodes the job, sends raster bytes (ESC @, init, raster, 1A), and the printer hands the label to the user. Amber arrows are forward requests; teal dashed arrows are responses.](./docs/images/lp-print-sequence.png)
 
 ## Multi-label batch workflow
 
-```mermaid
-flowchart LR
-    spec["spec.json<br/>[label1, label2, ...]"] --> cli["lp batch"]
-    cli --> validate["validate all<br/>same tape width"]
-    validate --> render["render each<br/>to Pillow Image"]
-    render --> batch["encode_batch"]
-    batch --> prologue["session prologue<br/>(once)"]
-    prologue --> loop["per-page:<br/>print_information<br/>+ mode + advanced<br/>+ margin + compression<br/>+ raster data<br/>+ 0x0C (next page)"]
-    loop --> final["last page:<br/>+ 0x1A (print & feed)"]
-    final --> printer["one strip,<br/>half-cut between labels"]
-```
+![Batch print flow — spec.json holding [label1, label2, …] enters the lp batch command, validates that every label uses the same tape width, renders each to a Pillow Image, then encode_batch emits a session prologue once followed by per-page commands (print_information + mode + advanced + margin + compression + raster + 0x0C next-page) repeated for each label. The last page appends 0x1A (print & feed). The PT-P750W produces one continuous strip with half-cuts between labels.](./docs/images/lp-batch-flow.png)
 
 ## How a single label is encoded
 
-```mermaid
-flowchart TD
-    A["Template.render(data, tape)"] --> B["Pillow Image<br/>(RGB, tape-sized)"]
-    B --> C["to_monochrome<br/>threshold 128"]
-    C --> D["fit_to_tape<br/>check dimensions match"]
-    D --> E["image_to_raster_bytes<br/>pad 128-pin head<br/>MSB-first"]
-    E --> F{"per 16-byte line"}
-    F -->|all zero| G["0x5A<br/>Z-shortcut"]
-    F -->|non-zero| H["0x47 + len + packbits(line)<br/>TIFF compression"]
-    G --> I["command stream"]
-    H --> I
-    I --> J["prologue<br/>(init, mode, info, margin)<br/>+ lines<br/>+ 0x1A (print & feed)"]
-```
+![Render pipeline — Template.render produces a tape-sized Pillow Image, converted to monochrome (threshold 128), fit-checked against tape dimensions, then packed into 128-pin MSB-first raster bytes. Each 16-byte line branches: all-zero lines collapse to a single 0x5A Z-shortcut; non-zero lines get 0x47 + length + PackBits (TIFF-style compression). Both paths merge into the command stream, which is wrapped in the prologue (init · mode · info · margin) and terminated with 0x1A (print & feed). Amber accents on entry, branch, and final output; teal highlights the Z-shortcut shortcut path.](./docs/images/lp-render-pipeline.png)
 
 ## Extending it
 
@@ -377,25 +293,12 @@ Full walkthrough in [`docs/creating-a-pack.md`](docs/creating-a-pack.md). The do
 
 ## Hardware & compatibility
 
-```mermaid
-flowchart LR
-    A["this project"]:::ours --- B["PT-P750W<br/>half-cut · Wi-Fi"]:::primary
-    A --- C["PT-P710BT<br/>Cube Plus"]:::works
-    A --- D["PT-E550W"]:::works
-    A -.-|different<br/>command set| E["PT-P300BT<br/>(Cube)"]:::nope
-    A -.-|different<br/>command set| F["PT-P910BT<br/>(Cube Pro)"]:::nope
-    A -.-|different<br/>protocol| G["QL series / Dymo / Zebra"]:::nope
-
-    classDef ours fill:#eef,stroke:#446,color:#000
-    classDef primary fill:#bfb,stroke:#080,color:#000
-    classDef works fill:#dfd,stroke:#080,color:#000
-    classDef nope fill:#fdd,stroke:#a00,color:#000
-```
+![Printer compatibility — this project (PT-P750W command set) fans out to two containers. WORKS: PT-P750W (primary, half-cut · Wi-Fi), PT-P710BT (Cube Plus), PT-E550W — teal-accented, same command family. OUT OF SCOPE (for now, amber-dashed): PT-P300BT (Cube) and PT-P910BT (Cube Pro) are different command sets; QL / Dymo / Zebra are a different protocol entirely.](./docs/images/lp-compatibility.png)
 
 - **Primary target: Brother PT-P750W** — 180 DPI, 128-pin head, TZe tapes 3.5–24 mm, USB + Wi-Fi, half-cut supported
 - **Also works** with **PT-P710BT** ("Cube Plus") and **PT-E550W** — same raster command reference, same 128-pin head. The P710BT lacks half-cut hardware but silently ignores the bit.
-- **Does not work** with the smaller **PT-P300BT** (Cube, original) or the **PT-P910BT** (Cube Pro) — different command sets and different head geometry
-- **Does not work** with Brother QL shipping-label printers or with Dymo / Zebra / Epson — completely different protocols
+- **Out of scope (for now)**: the smaller **PT-P300BT** (Cube, original) and the **PT-P910BT** (Cube Pro) — different command sets and different head geometry
+- **Out of scope (for now)**: Brother QL shipping-label printers and Dymo / Zebra / Epson — completely different protocols
 
 The encoder targets Brother's [Raster Command Reference for PT-E550W / PT-P750W / PT-P710BT](https://download.brother.com/welcome/docp100064/cv_pte550wp750wp710bt_eng_raster_102.pdf).
 

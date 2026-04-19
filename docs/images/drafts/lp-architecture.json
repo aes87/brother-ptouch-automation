@@ -1,0 +1,58 @@
+{
+  "template_type": "architecture",
+  "style": 8,
+  "width": 1280,
+  "height": 720,
+  "title": "label-printer Architecture",
+  "subtitle": "Three client surfaces · one engine · pluggable transports · one printer family",
+  "containers": [
+    { "x": 40,   "y": 140, "width": 260, "height": 460, "label": "CLIENTS",     "header_prefix": "IN" },
+    { "x": 360,  "y": 140, "width": 460, "height": 460, "label": "ENGINE",      "header_prefix": "CORE" },
+    { "x": 880,  "y": 140, "width": 240, "height": 460, "label": "TRANSPORTS",  "header_prefix": "TX" }
+  ],
+  "nodes": [
+    { "id": "cli",  "kind": "rect", "x": 80,  "y": 200, "width": 180, "height": 64, "label": "lp CLI" },
+    { "id": "skl",  "kind": "rect", "x": 80,  "y": 290, "width": 180, "height": 64, "label": "/label-printer", "sublabel": "Claude Code skill" },
+    { "id": "http", "kind": "rect", "x": 80,  "y": 380, "width": 180, "height": 64, "label": "HTTP service", "sublabel": "any LAN client" },
+
+    { "id": "reg",  "kind": "double_rect", "x": 400, "y": 200, "width": 380, "height": 70, "label": "template registry", "sublabel": "built-in + entry-point packs", "type_label": "ROUTING" },
+    { "id": "ren",  "kind": "rect",        "x": 400, "y": 290, "width": 380, "height": 64, "label": "template.render", "sublabel": "→ Pillow Image" },
+    { "id": "rast", "kind": "double_rect", "x": 400, "y": 376, "width": 380, "height": 90, "label": "raster encoder", "sublabel": "128-pin · TIFF-PackBits · half-cut · chaining", "type_label": "ENCODER", "stroke": "#e6a562" },
+    { "id": "stat", "kind": "rect",        "x": 400, "y": 488, "width": 380, "height": 60, "label": "status parser", "sublabel": "tape-match gate", "stroke": "#6fd1b4" },
+
+    { "id": "dry",  "kind": "rect", "x": 920, "y": 200, "width": 180, "height": 64, "label": "DryRunTransport", "sublabel": "default" },
+    { "id": "usb",  "kind": "rect", "x": 920, "y": 290, "width": 180, "height": 64, "label": "USB",             "sublabel": "phase 5" },
+    { "id": "bt",   "kind": "rect", "x": 920, "y": 380, "width": 180, "height": 64, "label": "Bluetooth SPP",   "sublabel": "phase 5" },
+
+    { "id": "ptr",  "kind": "double_rect", "x": 1140, "y": 290, "width": 100, "height": 200, "label": "PT-P750W", "sublabel": "180 DPI · 128 pins · half-cut", "type_label": "PRINTER", "stroke": "#e6a562" }
+  ],
+  "arrows": [
+    { "source": "cli",  "target": "reg", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "source": "skl",  "target": "reg", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "source": "http", "target": "reg", "source_port": "right", "target_port": "left", "flow": "control" },
+
+    { "source": "reg",  "target": "ren",  "source_port": "bottom", "target_port": "top", "flow": "data" },
+    { "source": "ren",  "target": "rast", "source_port": "bottom", "target_port": "top", "flow": "data" },
+
+    { "source": "rast", "target": "dry", "source_port": "right", "target_port": "left", "flow": "data" },
+    { "source": "rast", "target": "usb", "source_port": "right", "target_port": "left", "flow": "data" },
+    { "source": "rast", "target": "bt",  "source_port": "right", "target_port": "left", "flow": "data" },
+
+    { "source": "usb",  "target": "stat", "source_port": "left", "target_port": "right", "flow": "read",     "dashed": true, "label": "query" },
+    { "source": "bt",   "target": "stat", "source_port": "left", "target_port": "right", "flow": "read",     "dashed": true },
+    { "source": "stat", "target": "rast", "source_port": "top",  "target_port": "bottom", "flow": "feedback", "dashed": true, "label": "tape ok?" },
+
+    { "source": "usb",  "target": "ptr", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "source": "bt",   "target": "ptr", "source_port": "right", "target_port": "left", "flow": "control" }
+  ],
+  "legend": [
+    { "flow": "control",  "label": "Client request" },
+    { "flow": "data",     "label": "Render + encode chain" },
+    { "flow": "read",     "label": "Status query" },
+    { "flow": "feedback", "label": "Tape-match gate" }
+  ],
+  "legend_position": "bottom-left",
+  "legend_x": 40,
+  "legend_y": 640,
+  "legend_box": false
+}

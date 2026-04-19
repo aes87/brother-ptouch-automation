@@ -1,6 +1,6 @@
 """Tape width definitions and print-area geometry.
 
-The PT-P710BT print head is 128 pins wide. Tape narrower than 24 mm leaves
+The PT-P750W (and compatible PT-P710BT / PT-E550W) print head is 128 pins wide. Tape narrower than 24 mm leaves
 equal margins on both sides of the head, so a narrower tape uses fewer pins
 for the actual print. The per-tape margin values below are taken from the
 Brother Raster Command Reference.

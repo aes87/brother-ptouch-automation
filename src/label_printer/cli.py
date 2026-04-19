@@ -42,7 +42,7 @@ def _parse_fields(pairs: tuple[str, ...]) -> dict[str, str]:
 @click.group()
 @click.version_option()
 def main() -> None:
-    """Brother PT-P710BT label printer automation."""
+    """Brother PT-P750W label printer automation (also supports PT-P710BT and PT-E550W)."""
 
 
 # --- Registry-driven commands -----------------------------------------------

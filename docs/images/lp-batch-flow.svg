@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 580" width="1280" height="580">
+  <defs>
+    <marker id="arrowA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9c5b6"/>
+    </marker>
+    <marker id="arrowB" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6fd1b4"/>
+    </marker>
+    <marker id="arrowC" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9c5b6"/>
+    </marker>
+    <marker id="arrowE" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9c5b6"/>
+    </marker>
+    <marker id="arrowF" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b8899"/>
+    </marker>
+    <marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e6a562"/>
+    </marker>
+    <marker id="arrowH" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b8899"/>
+    </marker>
+    <filter id="editorialGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.08 0"/>
+    </filter>
+    <radialGradient id="editorialTopGlow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#e6a562" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#e6a562" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+    text { font-family: 'Inter', 'Noto Sans', 'Helvetica Neue', 'DejaVu Sans', sans-serif; }
+    .title { font-size: 46px; font-weight: 700; fill: #f5efe0; font-family: 'Playfair Display', 'Noto Serif Display', 'DejaVu Serif', Georgia, serif; }
+    .subtitle { font-size: 12px; font-weight: 500; fill: #e6a562; letter-spacing: 0.3em; text-transform: uppercase; }
+    .section { font-size: 13px; font-weight: 700; fill: #f5efe0; letter-spacing: 1.4px; }
+    .section-sub { font-size: 12px; font-weight: 500; fill: #b5b3a8; }
+    .node-title { font-size: 18px; font-weight: 700; fill: #f5efe0; }
+    .node-sub { font-size: 12px; font-weight: 500; fill: #d4cfbf; }
+    .node-type { font-size: 10px; font-weight: 700; fill: #b5b3a8; letter-spacing: 0.08em; }
+    .arrow-label { font-size: 12px; font-weight: 600; fill: #c9c5b6; }
+    .legend { font-size: 12px; font-weight: 500; fill: #d4cfbf; }
+    .footnote { font-size: 12px; font-weight: 500; fill: #b5b3a8; }
+    </style>
+  </defs>
+  <rect width="1280.0" height="580.0" fill="#15151e"/>
+  <rect width="1280.0" height="319.0" fill="url(#editorialTopGlow)"/>
+  <rect width="1280.0" height="580.0" filter="url(#editorialGrain)" opacity="0.6"/>
+  <text x="640.0" y="56" text-anchor="middle" class="title">Batch Print Flow</text>
+  <text x="640.0" y="82" text-anchor="middle" class="subtitle">spec.json → validated batch → one strip with half-cuts between labels</text>
+  <path d="M 240.0,240.0 L 280.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 460.0,240.0 L 500.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 700.0,240.0 L 740.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 940.0,240.0 L 980.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 1100.0,280.0 L 1100.0,320.0 L 140.0,320.0 L 140.0,360.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 240.0,410.0 L 290.0,410.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 750.0,410.0 L 800.0,410.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 1020.0,410.0 L 1060.0,410.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <rect x="40.0" y="200.0" width="200.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="140.0" y="240.0" text-anchor="middle" class="node-title">spec.json</text>
+  <text x="140.0" y="262.0" text-anchor="middle" class="node-sub">[label1, label2, …]</text>
+  <rect x="280.0" y="200.0" width="180.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="370.0" y="240.0" text-anchor="middle" class="node-title">lp batch</text>
+  <rect x="500.0" y="200.0" width="200.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="600.0" y="240.0" text-anchor="middle" class="node-title">validate</text>
+  <text x="600.0" y="262.0" text-anchor="middle" class="node-sub">same tape width</text>
+  <rect x="740.0" y="200.0" width="200.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="840.0" y="240.0" text-anchor="middle" class="node-title">render each</text>
+  <text x="840.0" y="262.0" text-anchor="middle" class="node-sub">→ Pillow Image</text>
+  <rect x="980.0" y="200.0" width="240.0" height="80.0" rx="8.0" fill="#24222f" stroke="#e6a562" stroke-width="2.0"/>
+  <rect x="986.0" y="206.0" width="228.0" height="68.0" rx="5.0" fill="none" stroke="#e6a562" stroke-width="1.2" opacity="0.65"/>
+  <text x="1100.0" y="218.0" text-anchor="middle" class="node-type">ENCODER</text>
+  <text x="1100.0" y="246.0" text-anchor="middle" class="node-title">encode_batch</text>
+  <text x="1100.0" y="268.0" text-anchor="middle" class="node-sub">raster command bytes</text>
+  <rect x="40.0" y="360.0" width="200.0" height="100.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="140.0" y="410.0" text-anchor="middle" class="node-title">session prologue</text>
+  <text x="140.0" y="432.0" text-anchor="middle" class="node-sub">init · mode · info · margin · once</text>
+  <rect x="290.0" y="360.0" width="460.0" height="100.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="2.0"/>
+  <rect x="296.0" y="366.0" width="448.0" height="88.0" rx="5.0" fill="none" stroke="rgba(245,239,224,0.18)" stroke-width="1.2" opacity="0.65"/>
+  <text x="520.0" y="378.0" text-anchor="middle" class="node-type">REPEAT</text>
+  <text x="520.0" y="416.0" text-anchor="middle" class="node-title">per-page commands</text>
+  <text x="520.0" y="438.0" text-anchor="middle" class="node-sub">print_information + mode + advanced + margin + compression + raster + 0x0C (next page)</text>
+  <rect x="800.0" y="360.0" width="220.0" height="100.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="910.0" y="410.0" text-anchor="middle" class="node-title">last page</text>
+  <text x="910.0" y="432.0" text-anchor="middle" class="node-sub">+ 0x1A · print &amp; feed</text>
+  <rect x="1060.0" y="360.0" width="180.0" height="100.0" rx="8.0" fill="#24222f" stroke="#e6a562" stroke-width="2.0"/>
+  <rect x="1066.0" y="366.0" width="168.0" height="88.0" rx="5.0" fill="none" stroke="#e6a562" stroke-width="1.2" opacity="0.65"/>
+  <text x="1150.0" y="378.0" text-anchor="middle" class="node-type">PRINTER</text>
+  <text x="1150.0" y="416.0" text-anchor="middle" class="node-title">PT-P750W</text>
+  <text x="1150.0" y="438.0" text-anchor="middle" class="node-sub">one strip · half-cuts</text>
+</svg>

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "label-printer"
 version = "0.2.0"
-description = "Automation flow for Brother P-touch Cube Plus (PT-P710BT) label maker"
+description = "Automation flow for the Brother PT-P750W label maker (also supports PT-P710BT and PT-E550W)"
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
@@ -47,7 +47,7 @@ label_printer = ["py.typed"]
 testpaths = ["tests"]
 addopts = "-q"
 markers = [
-    "hardware: requires physical PT-P710BT attached (skipped by default)",
+    "hardware: requires a physical PT-P750W (or P710BT / E550W) attached (skipped by default)",
 ]
 
 [tool.ruff]

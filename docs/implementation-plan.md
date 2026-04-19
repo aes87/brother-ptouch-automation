@@ -8,7 +8,7 @@ status: proposed
 
 # Label Printer — Implementation Plan
 
-Target hardware: Brother PT-P710BT (P-touch Cube Plus). Python engine, Click CLI, eventual Claude Code skill. Default tape: 12mm. Printer lives on this machine for now, possibly a server later.
+Target hardware: **Brother PT-P750W** (primary — half-cut, Wi-Fi). Raster-compatible siblings PT-P710BT (Cube Plus) and PT-E550W are also supported. Python engine, Click CLI, eventual Claude Code skill. Default tape: 12mm. Printer lives on this machine for now, possibly a server later.
 
 **Reorder note (2026-04-18)**: printer arrives **2026-04-19**. Plan now front-loads every phase that can be built, golden-tested, and dry-run without physical hardware. The moment the printer is on the bench, we should already have: raster bytes for all templates, the full template library, the CLI, and the skill — and the only work left is validating transport and swapping the dry-run stub for a real send.
 
@@ -28,7 +28,7 @@ Target hardware: Brother PT-P710BT (P-touch Cube Plus). Python engine, Click CLI
                    └─────────────────────────────────────────────┘
                                         │
                                         ▼
-                                  PT-P710BT
+                                  PT-P750W
 ```
 
 **Key separation**: templates produce a Pillow `Image` given structured input; the engine converts images to Brother raster command bytes; transport writes bytes to USB / BT / a `DryRunTransport` that dumps to a file. Clients never see transport. This lets us build phases 1–4 with `DryRunTransport` and swap in the real transport in phase 5 without touching any template or engine code.

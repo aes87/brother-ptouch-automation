@@ -1,6 +1,7 @@
 """Brother raster command encoder.
 
-Encodes a Pillow image into the exact byte stream accepted by a PT-P710BT.
+Encodes a Pillow image into the exact byte stream accepted by the PT-P750W
+(and its raster-compatible siblings, PT-P710BT and PT-E550W).
 The output of `encode_job()` is ready to write to a transport (USB / BT /
 dry-run) with no further processing.
 """

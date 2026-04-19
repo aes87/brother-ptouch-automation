@@ -1,22 +1,22 @@
 ---
 name: label-printer
 description: >
-  Design and print labels on the Brother P-touch Cube Plus (PT-P710BT) from
-  templates — kitchen (pantry jars, spice, leftovers, freezer), electronics
-  (cable flags, component bins, PSU polarity), 3D printing (filament spools,
-  print bins, tool tags). Invoke when the user asks for a label, mentions
-  "label maker", "p-touch", "tape", or wants to label a physical object.
-  Always dry-renders a PNG preview first and requires confirmation before
-  sending to the printer.
+  Design and print labels on the Brother PT-P750W (primary target; PT-P710BT
+  and PT-E550W also work via the same raster command set) from templates —
+  kitchen (pantry jars, spice, leftovers, freezer), electronics (cable flags,
+  component bins, PSU polarity), 3D printing (filament spools, print bins,
+  tool tags). Invoke when the user asks for a label, mentions "label maker",
+  "p-touch", "tape", or wants to label a physical object. Always dry-renders
+  a PNG preview first and requires confirmation before sending to the printer.
 allowed-tools: Bash, Read, Write
-model: sonnet
+model: claude-sonnet-4-6
 ---
 
 # Label Printer
 
 You generate labels for the Brother PT-P750W (primary) via the `lp` CLI. The same commands work for the PT-P710BT and PT-E550W — they share the command set.
 
-**Expected install**: `lp` on `$PATH`, OR set `LP` to the absolute path of the executable (e.g. `LP=/path/to/label-printer/.venv/bin/lp`) at the top of your session. If neither works, ask the user where their `label-printer` checkout lives.
+**Expected install**: `lp` on `$PATH`, OR set `LP` to the absolute path of the executable. On this machine: `LP=/workspace/projects/label-printer/.venv/bin/lp`. If that path is missing, ask the user where their `label-printer` checkout lives.
 
 **Default tape: 12mm.** Many users also stock 24mm; confirm tape width if it matters.
 
@@ -30,21 +30,7 @@ You generate labels for the Brother PT-P750W (primary) via the `lp` CLI. The sam
 
 ## Template catalog
 
-Kitchen:
-- `kitchen/pantry_jar` — name + purchased + optional expiry
-- `kitchen/spice` — name + optional origin + best-by
-- `kitchen/leftover` — contents + cooked date + auto eat-by
-- `kitchen/freezer` — contents + frozen date + portion
-
-Electronics:
-- `electronics/cable_flag` — source + dest, fold-over label
-- `electronics/component_bin` — value + footprint + optional tolerance
-- `electronics/psu_polarity` — voltage + current + polarity icon
-
-3D printing:
-- `three_d_printing/filament_spool` — material + color + brand + opened + optional temps
-- `three_d_printing/print_bin` — part + optional project + quantity
-- `three_d_printing/tool_tag` — tool + optional owner
+Packs ship for kitchen, electronics, 3D printing, calibration, garden, home-inventory, media, networking, pet, and travel. The full catalog changes as new packs land, so **always run `lp list` (or `lp list --category X`) to see what's currently installed** rather than relying on a memorised list. Use `lp show <qualified>` to inspect a template's fields.
 
 ## Commands you will use
 
@@ -81,6 +67,17 @@ lp print kitchen/pantry_jar \
 - **Use `lp show <template>` to check required fields** before constructing the command. Don't guess.
 - **Free-form requests**: infer the best template, confirm your pick with the user before rendering. If multiple could fit (e.g. "label this jar of paprika"), ask.
 - **If the user sends a photo**: read the text yourself from the image (vision) and extract the fields. Don't rely on OCR tooling — the model reads labels better than a CLI pipeline.
+
+## When the request arrives via Telegram
+
+If the incoming message is a `<channel source="telegram" chat_id="..." ...>` tag, the user is on their phone and cannot see your terminal output or the filesystem. The PNG preview must go back to them as a Telegram attachment.
+
+1. React with a working emoji (e.g. 👀 or 🏷) on the incoming message so they know you're on it.
+2. Render the preview PNG to a stable path like `/tmp/label_preview.png`.
+3. Reply with the PNG attached: `reply(chat_id=<from the tag>, text="preview — ok to print?", files=["/tmp/label_preview.png"])`. Describe what you rendered in one line so they can sanity-check without opening the image.
+4. Wait for explicit "yes" / "print" / "send it" before adding `--send`. Never `--send` unprompted — it's the only thing that moves tape.
+5. For free-form requests ("label this: sriracha, opened yesterday"), infer the best template, name it in your reply ("using `kitchen/pantry_jar`, tape 12mm"), and let them redirect before rendering if the pick is wrong.
+6. On success with `--send`, send a new reply (not an edit) with "printed ✅" so their phone pings. If `--send` fails because no printer is paired yet, say so plainly — that's expected pre-hardware.
 
 ## Failure modes
 

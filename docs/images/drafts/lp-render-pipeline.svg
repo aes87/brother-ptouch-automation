@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" width="1280" height="760">
+  <defs>
+    <marker id="arrowA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9c5b6"/>
+    </marker>
+    <marker id="arrowB" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6fd1b4"/>
+    </marker>
+    <marker id="arrowC" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9c5b6"/>
+    </marker>
+    <marker id="arrowE" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c9c5b6"/>
+    </marker>
+    <marker id="arrowF" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b8899"/>
+    </marker>
+    <marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e6a562"/>
+    </marker>
+    <marker id="arrowH" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b8899"/>
+    </marker>
+    <filter id="editorialGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.08 0"/>
+    </filter>
+    <radialGradient id="editorialTopGlow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#e6a562" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#e6a562" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+    text { font-family: 'Inter', 'Noto Sans', 'Helvetica Neue', 'DejaVu Sans', sans-serif; }
+    .title { font-size: 46px; font-weight: 700; fill: #f5efe0; font-family: 'Playfair Display', 'Noto Serif Display', 'DejaVu Serif', Georgia, serif; }
+    .subtitle { font-size: 12px; font-weight: 500; fill: #e6a562; letter-spacing: 0.3em; text-transform: uppercase; }
+    .section { font-size: 13px; font-weight: 700; fill: #f5efe0; letter-spacing: 1.4px; }
+    .section-sub { font-size: 12px; font-weight: 500; fill: #b5b3a8; }
+    .node-title { font-size: 18px; font-weight: 700; fill: #f5efe0; }
+    .node-sub { font-size: 12px; font-weight: 500; fill: #d4cfbf; }
+    .node-type { font-size: 10px; font-weight: 700; fill: #b5b3a8; letter-spacing: 0.08em; }
+    .arrow-label { font-size: 12px; font-weight: 600; fill: #c9c5b6; }
+    .legend { font-size: 12px; font-weight: 500; fill: #d4cfbf; }
+    .footnote { font-size: 12px; font-weight: 500; fill: #b5b3a8; }
+    </style>
+  </defs>
+  <rect width="1280.0" height="760.0" fill="#15151e"/>
+  <rect width="1280.0" height="400" fill="url(#editorialTopGlow)"/>
+  <rect width="1280.0" height="760.0" filter="url(#editorialGrain)" opacity="0.6"/>
+  <text x="640.0" y="56" text-anchor="middle" class="title">Render Pipeline</text>
+  <text x="640.0" y="82" text-anchor="middle" class="subtitle">Template → Pillow → mono → fit → 128-pin raster bytes → command stream</text>
+  <path d="M 280.0,240.0 L 320.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 540.0,240.0 L 580.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 800.0,240.0 L 840.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 1060.0,240.0 L 1100.0,240.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 1180.0,280.0 L 1180.0,320.0 L 660.0,320.0 L 660.0,380.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 660.0,460.0 L 660.0,470.0 L 340.0,470.0 L 340.0,480.0" fill="none" stroke="#6fd1b4" stroke-width="1.6" marker-end="url(#arrowB)"/>
+  <path d="M 660.0,460.0 L 660.0,470.0 L 960.0,470.0 L 960.0,480.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 340.0,560.0 L 340.0,570.0 L 660.0,570.0 L 660.0,580.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 960.0,560.0 L 960.0,570.0 L 660.0,570.0 L 660.0,580.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <path d="M 660.0,640.0 L 660.0,660.0" fill="none" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <rect x="40.0" y="200.0" width="240.0" height="80.0" rx="8.0" fill="#24222f" stroke="#e6a562" stroke-width="2.0"/>
+  <rect x="46.0" y="206.0" width="228.0" height="68.0" rx="5.0" fill="none" stroke="#e6a562" stroke-width="1.2" opacity="0.65"/>
+  <text x="160.0" y="218.0" text-anchor="middle" class="node-type">ENTRY</text>
+  <text x="160.0" y="246.0" text-anchor="middle" class="node-title">Template.render</text>
+  <text x="160.0" y="268.0" text-anchor="middle" class="node-sub">data · tape</text>
+  <rect x="320.0" y="200.0" width="220.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="430.0" y="240.0" text-anchor="middle" class="node-title">Pillow Image</text>
+  <text x="430.0" y="262.0" text-anchor="middle" class="node-sub">RGB · tape-sized</text>
+  <rect x="580.0" y="200.0" width="220.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="690.0" y="240.0" text-anchor="middle" class="node-title">to_monochrome</text>
+  <text x="690.0" y="262.0" text-anchor="middle" class="node-sub">threshold 128</text>
+  <rect x="840.0" y="200.0" width="220.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="950.0" y="240.0" text-anchor="middle" class="node-title">fit_to_tape</text>
+  <text x="950.0" y="262.0" text-anchor="middle" class="node-sub">check dimensions</text>
+  <rect x="1100.0" y="200.0" width="160.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="2.0"/>
+  <rect x="1106.0" y="206.0" width="148.0" height="68.0" rx="5.0" fill="none" stroke="rgba(245,239,224,0.18)" stroke-width="1.2" opacity="0.65"/>
+  <text x="1180.0" y="218.0" text-anchor="middle" class="node-type">ENCODE</text>
+  <text x="1180.0" y="246.0" text-anchor="middle" class="node-title">raster bytes</text>
+  <text x="1180.0" y="268.0" text-anchor="middle" class="node-sub">128-pin · MSB-first</text>
+  <rect x="540.0" y="380.0" width="240.0" height="80.0" rx="8.0" fill="#24222f" stroke="#e6a562" stroke-width="2.0"/>
+  <rect x="546.0" y="386.0" width="228.0" height="68.0" rx="5.0" fill="none" stroke="#e6a562" stroke-width="1.2" opacity="0.65"/>
+  <text x="660.0" y="398.0" text-anchor="middle" class="node-type">BRANCH</text>
+  <text x="660.0" y="426.0" text-anchor="middle" class="node-title">per 16-byte line</text>
+  <text x="660.0" y="448.0" text-anchor="middle" class="node-sub">decision</text>
+  <rect x="220.0" y="480.0" width="240.0" height="80.0" rx="8.0" fill="#24222f" stroke="#6fd1b4" stroke-width="1.8"/>
+  <text x="340.0" y="520.0" text-anchor="middle" class="node-title">0x5A</text>
+  <text x="340.0" y="542.0" text-anchor="middle" class="node-sub">Z-shortcut · all-zero line</text>
+  <rect x="820.0" y="480.0" width="280.0" height="80.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="960.0" y="520.0" text-anchor="middle" class="node-title">0x47 + len + packbits</text>
+  <text x="960.0" y="542.0" text-anchor="middle" class="node-sub">TIFF compression</text>
+  <rect x="540.0" y="580.0" width="240.0" height="60.0" rx="8.0" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="660.0" y="610.0" text-anchor="middle" class="node-title">command stream</text>
+  <rect x="320.0" y="660.0" width="680.0" height="80.0" rx="8.0" fill="#24222f" stroke="#e6a562" stroke-width="2.0"/>
+  <rect x="326.0" y="666.0" width="668.0" height="68.0" rx="5.0" fill="none" stroke="#e6a562" stroke-width="1.2" opacity="0.65"/>
+  <text x="660.0" y="678.0" text-anchor="middle" class="node-type">OUT</text>
+  <text x="660.0" y="706.0" text-anchor="middle" class="node-title">prologue + lines + 0x1A</text>
+  <text x="660.0" y="728.0" text-anchor="middle" class="node-sub">init · mode · info · margin · raster · print &amp; feed</text>
+  <rect x="465.0" y="440.0" width="70" height="20" rx="6" fill="#15151e" opacity="1"/>
+  <text x="500.0" y="454.0" text-anchor="middle" class="arrow-label">all zero</text>
+  <rect x="775.0" y="456.0" width="70" height="20" rx="6" fill="#15151e" opacity="1"/>
+  <text x="810.0" y="470.0" text-anchor="middle" class="arrow-label">non-zero</text>
+  <line x1="40.0" y1="700.0" x2="70.0" y2="700.0" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <text x="80.0" y="704.0" class="legend">Image / byte flow</text>
+  <line x1="40.0" y1="722.0" x2="70.0" y2="722.0" stroke="#c9c5b6" stroke-width="1.6" marker-end="url(#arrowA)"/>
+  <text x="80.0" y="726.0" class="legend">Per-line dispatch</text>
+  <line x1="40.0" y1="744.0" x2="70.0" y2="744.0" stroke="#6fd1b4" stroke-width="1.6" marker-end="url(#arrowB)"/>
+  <text x="80.0" y="748.0" class="legend">Z-shortcut path</text>
+</svg>

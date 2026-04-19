@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 700" width="1280" height="700">
+  <defs>
+    <marker id="arrowWorks" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6fd1b4"/>
+    </marker>
+    <marker id="arrowOOS" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e6a562"/>
+    </marker>
+    <filter id="editorialGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.08 0"/>
+    </filter>
+    <radialGradient id="editorialTopGlow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#e6a562" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#e6a562" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+    text { font-family: 'Inter', 'Noto Sans', 'Helvetica Neue', 'DejaVu Sans', sans-serif; }
+    .title { font-size: 46px; font-weight: 700; fill: #f5efe0; font-family: 'Playfair Display', 'Noto Serif Display', 'DejaVu Serif', Georgia, serif; }
+    .subtitle { font-size: 12px; font-weight: 500; fill: #e6a562; letter-spacing: 0.3em; text-transform: uppercase; }
+    .section-ok { font-size: 13px; font-weight: 700; fill: #6fd1b4; letter-spacing: 1.4px; }
+    .section-no { font-size: 13px; font-weight: 700; fill: #e6a562; letter-spacing: 1.4px; }
+    .node-title { font-size: 20px; font-weight: 700; fill: #f5efe0; }
+    .node-sub { font-size: 12px; font-weight: 500; fill: #d4cfbf; }
+    .node-type { font-size: 10px; font-weight: 700; fill: #b5b3a8; letter-spacing: 0.08em; }
+    .arrow-label { font-size: 12px; font-weight: 600; fill: #c9c5b6; }
+    .legend { font-size: 12px; font-weight: 500; fill: #d4cfbf; }
+    </style>
+  </defs>
+  <rect width="1280" height="700" fill="#15151e"/>
+  <rect width="1280" height="360" fill="url(#editorialTopGlow)"/>
+  <rect width="1280" height="700" filter="url(#editorialGrain)" opacity="0.6"/>
+
+  <text x="640" y="56" text-anchor="middle" class="title">Printer Compatibility</text>
+  <text x="640" y="82" text-anchor="middle" class="subtitle">Same protocol family — same code · different command set or transport — out of scope</text>
+
+  <!-- WORKS container (top row) -->
+  <rect x="120" y="110" width="1040" height="170" rx="16" fill="none" stroke="rgba(111,209,180,0.22)" stroke-width="1.4"/>
+  <text x="138" y="134" class="section-ok">OK // WORKS</text>
+
+  <!-- P750W primary -->
+  <rect x="140" y="150" width="320" height="115" rx="8" fill="#24222f" stroke="#6fd1b4" stroke-width="2.0"/>
+  <rect x="146" y="156" width="308" height="103" rx="5" fill="none" stroke="#6fd1b4" stroke-width="1.2" opacity="0.65"/>
+  <text x="300" y="172" text-anchor="middle" class="node-type">PRIMARY</text>
+  <text x="300" y="208" text-anchor="middle" class="node-title">PT-P750W</text>
+  <text x="300" y="232" text-anchor="middle" class="node-sub">half-cut · Wi-Fi · 180 DPI</text>
+
+  <!-- P710BT -->
+  <rect x="480" y="150" width="320" height="115" rx="8" fill="#24222f" stroke="#6fd1b4" stroke-width="1.8"/>
+  <text x="640" y="200" text-anchor="middle" class="node-title">PT-P710BT</text>
+  <text x="640" y="222" text-anchor="middle" class="node-sub">Cube Plus · no half-cut</text>
+
+  <!-- E550W -->
+  <rect x="820" y="150" width="320" height="115" rx="8" fill="#24222f" stroke="#6fd1b4" stroke-width="1.8"/>
+  <text x="980" y="200" text-anchor="middle" class="node-title">PT-E550W</text>
+  <text x="980" y="222" text-anchor="middle" class="node-sub">same command family</text>
+
+  <!-- this project (center) -->
+  <rect x="520" y="310" width="240" height="100" rx="8" fill="#24222f" stroke="#e6a562" stroke-width="2.0"/>
+  <rect x="526" y="316" width="228" height="88" rx="5" fill="none" stroke="#e6a562" stroke-width="1.2" opacity="0.65"/>
+  <text x="640" y="332" text-anchor="middle" class="node-type">ROOT</text>
+  <text x="640" y="365" text-anchor="middle" class="node-title">this project</text>
+  <text x="640" y="386" text-anchor="middle" class="node-sub">PT-P750W command set</text>
+
+  <!-- OUT OF SCOPE container (bottom row) -->
+  <rect x="120" y="445" width="1040" height="185" rx="16" fill="none" stroke="rgba(230,165,98,0.22)" stroke-width="1.4"/>
+  <text x="138" y="469" class="section-no">NO // OUT OF SCOPE (for now)</text>
+
+  <!-- P300BT -->
+  <rect x="140" y="485" width="320" height="125" rx="8" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="300" y="534" text-anchor="middle" class="node-title">PT-P300BT</text>
+  <text x="300" y="556" text-anchor="middle" class="node-sub">Cube · different command set</text>
+  <text x="300" y="576" text-anchor="middle" class="node-sub" opacity="0.75">66-pin head · 180 DPI</text>
+
+  <!-- P910BT -->
+  <rect x="480" y="485" width="320" height="125" rx="8" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="640" y="534" text-anchor="middle" class="node-title">PT-P910BT</text>
+  <text x="640" y="556" text-anchor="middle" class="node-sub">Cube Pro · different command set</text>
+  <text x="640" y="576" text-anchor="middle" class="node-sub" opacity="0.75">560-pin head · 360 DPI</text>
+
+  <!-- QL · Dymo · Zebra -->
+  <rect x="820" y="485" width="320" height="125" rx="8" fill="#24222f" stroke="rgba(245,239,224,0.18)" stroke-width="1.8"/>
+  <text x="980" y="534" text-anchor="middle" class="node-title">QL · Dymo · Zebra</text>
+  <text x="980" y="556" text-anchor="middle" class="node-sub">different protocol entirely</text>
+  <text x="980" y="576" text-anchor="middle" class="node-sub" opacity="0.75">die-cut · thermal · ZPL</text>
+
+  <!-- Solid teal arrows: this project (top) → WORKS items (bottom-center of each) -->
+  <path d="M 620,310 L 300,270" fill="none" stroke="#6fd1b4" stroke-width="1.8" marker-end="url(#arrowWorks)"/>
+  <path d="M 640,310 L 640,270" fill="none" stroke="#6fd1b4" stroke-width="1.8" marker-end="url(#arrowWorks)"/>
+  <path d="M 660,310 L 980,270" fill="none" stroke="#6fd1b4" stroke-width="1.8" marker-end="url(#arrowWorks)"/>
+
+  <!-- Dashed amber arrows: this project (bottom) → OUT OF SCOPE items (top-center of each) -->
+  <path d="M 620,410 L 300,480" fill="none" stroke="#e6a562" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arrowOOS)"/>
+  <path d="M 640,410 L 640,480" fill="none" stroke="#e6a562" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arrowOOS)"/>
+  <path d="M 660,410 L 980,480" fill="none" stroke="#e6a562" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arrowOOS)"/>
+
+  <!-- Arrow labels -->
+  <rect x="418" y="428" width="98" height="20" rx="6" fill="#15151e"/>
+  <text x="467" y="442" text-anchor="middle" class="arrow-label">incompatible</text>
+
+  <rect x="775" y="428" width="112" height="20" rx="6" fill="#15151e"/>
+  <text x="831" y="442" text-anchor="middle" class="arrow-label">wrong protocol</text>
+
+  <!-- Legend -->
+  <line x1="140" y1="658" x2="172" y2="658" stroke="#6fd1b4" stroke-width="1.8" marker-end="url(#arrowWorks)"/>
+  <text x="184" y="662" class="legend">Same command family — works today</text>
+
+  <line x1="140" y1="682" x2="172" y2="682" stroke="#e6a562" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arrowOOS)"/>
+  <text x="184" y="686" class="legend">Out of scope (for now) — different command set or protocol</text>
+</svg>
