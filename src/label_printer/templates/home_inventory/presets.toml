@@ -1,0 +1,99 @@
+[[presets]]
+qualified = "home_inventory/moving_box"
+summary   = "Moving / storage box: destination room + contents summary."
+layout    = "two_line"
+default_tape = 24
+icon_field = "icon"
+max_width_mm = 200
+primary_parts = [
+  "{room}",
+  { if = "fragile", text = " · FRAGILE" },
+]
+secondary = [ "{contents}" ]
+
+[[presets.fields]]
+name = "room"
+required = true
+example = "Kitchen"
+description = "Destination room."
+
+[[presets.fields]]
+name = "contents"
+required = true
+example = "pots, cutting boards"
+description = "Contents summary."
+
+[[presets.fields]]
+name = "fragile"
+required = false
+default = "no"
+description = "Fragility flag ('yes' to mark FRAGILE)."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "package"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "home_inventory/warranty"
+summary   = "Warranty label: item + expiry + optional receipt pointer."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{item}"
+secondary = [
+  "warranty exp {expires}",
+  { if = "receipt", text = " · {receipt}" },
+]
+
+[[presets.fields]]
+name = "item"
+required = true
+example = "Dishwasher"
+description = "Item name."
+
+[[presets.fields]]
+name = "expires"
+required = true
+example = "2030-09-12"
+description = "Warranty expiry date."
+
+[[presets.fields]]
+name = "receipt"
+required = false
+example = "vault:warranties/dishwasher"
+description = "Optional receipt pointer."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "shield"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "home_inventory/storage_bin"
+summary   = "Storage bin: shelf/location tag + contents summary."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{location}"
+secondary = [ "{contents}" ]
+
+[[presets.fields]]
+name = "location"
+required = true
+example = "Basement bay 3"
+description = "Bin location."
+
+[[presets.fields]]
+name = "contents"
+required = true
+example = "Holiday lights"
+description = "Contents summary."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "box"
+description = "Optional icon name."

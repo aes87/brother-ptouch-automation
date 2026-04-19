@@ -1,0 +1,99 @@
+[[presets]]
+qualified = "media/bookshelf_tag"
+summary   = "Bookshelf tag: title + author + optional call number."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{title}"
+secondary = [
+  "{author}",
+  { if = "callno", text = " · {callno}" },
+]
+
+[[presets.fields]]
+name = "title"
+required = true
+example = "Refactoring"
+description = "Book title."
+
+[[presets.fields]]
+name = "author"
+required = true
+example = "Fowler"
+description = "Author."
+
+[[presets.fields]]
+name = "callno"
+required = false
+example = "QA76.F69"
+description = "Optional call number / shelf code."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "book"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "media/archive_box"
+summary   = "Archive box label: identifier + retention / destroy-by date."
+layout    = "two_line"
+default_tape = 18
+icon_field = "icon"
+max_width_mm = 180
+primary   = "{label}"
+secondary = [ "retain until {retain_until}" ]
+
+[[presets.fields]]
+name = "label"
+required = true
+example = "2024 taxes"
+description = "Box identifier."
+
+[[presets.fields]]
+name = "retain_until"
+required = true
+example = "2031-04-15"
+description = "Retention expiry."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "package"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "media/cd_record"
+summary   = "Music media: title + artist + optional year."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{title}"
+secondary = [
+  "{artist}",
+  { if = "year", text = " · {year}" },
+]
+
+[[presets.fields]]
+name = "title"
+required = true
+example = "Kind of Blue"
+description = "Album title."
+
+[[presets.fields]]
+name = "artist"
+required = true
+example = "Miles Davis"
+description = "Artist."
+
+[[presets.fields]]
+name = "year"
+required = false
+example = "1959"
+description = "Optional release year."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "bookmark"
+description = "Optional icon name."

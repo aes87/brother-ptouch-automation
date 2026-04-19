@@ -1,0 +1,91 @@
+[[presets]]
+qualified = "pet/collar_backup"
+summary   = "Pet collar backup: pet name + emergency contact."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{name}"
+secondary = [ "{contact}" ]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "Rex"
+description = "Pet name."
+
+[[presets.fields]]
+name = "contact"
+required = true
+example = "+1 555 0100"
+description = "Contact phone or info."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "paw-print"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "pet/med_schedule"
+summary   = "Pet medication schedule: pet + med + dose + cadence."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{pet} · {med}"
+secondary = [ "{cadence}" ]
+
+[[presets.fields]]
+name = "pet"
+required = true
+example = "Rex"
+description = "Pet name."
+
+[[presets.fields]]
+name = "med"
+required = true
+example = "Apoquel 16mg"
+description = "Medication."
+
+[[presets.fields]]
+name = "cadence"
+required = true
+example = "1× daily"
+description = "How often."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "pill"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "pet/food_bowl"
+summary   = "Feeding bowl / container: pet + food + portion."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{pet} · {food}"
+secondary = [ "{portion}" ]
+
+[[presets.fields]]
+name = "pet"
+required = true
+example = "Rex"
+description = "Pet name."
+
+[[presets.fields]]
+name = "food"
+required = true
+example = "Acana Adult"
+description = "Food identifier."
+
+[[presets.fields]]
+name = "portion"
+required = true
+example = "1 cup"
+description = "Portion / amount."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "paw-print"
+description = "Optional icon name."

@@ -1,19 +1,15 @@
-"""Media pack — bookshelf tags, archive boxes, CDs / records."""
+"""Media pack — bookshelf tags, archive boxes, CDs / records. All preset-driven."""
 
 from __future__ import annotations
 
-from label_printer.templates.media.archive_box import ArchiveBoxTemplate
-from label_printer.templates.media.bookshelf_tag import BookshelfTagTemplate
-from label_printer.templates.media.cd_record import CdRecordTemplate
+from pathlib import Path
+
 from label_printer.templates.pack import TemplatePack
+from label_printer.templates.preset import load_presets
 
 PACK = TemplatePack(
     name="media",
-    version="0.1.0",
+    version="0.2.0",
     summary="Media labels — bookshelf tags, archive boxes, CDs/records.",
-    templates=(
-        BookshelfTagTemplate(),
-        ArchiveBoxTemplate(),
-        CdRecordTemplate(),
-    ),
+    templates=tuple(load_presets(Path(__file__).parent / "presets.toml")),
 )

@@ -1,0 +1,88 @@
+[[presets]]
+qualified = "networking/patch_port"
+summary   = "Patch-panel port: port ID + VLAN + optional destination."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{port}"
+secondary = [
+  "{vlan}",
+  { if = "dest", text = " → {dest}" },
+]
+
+[[presets.fields]]
+name = "port"
+required = true
+example = "P12"
+description = "Port identifier."
+
+[[presets.fields]]
+name = "vlan"
+required = true
+example = "VLAN 20"
+description = "VLAN ID or name."
+
+[[presets.fields]]
+name = "dest"
+required = false
+example = "sw1 g0/3"
+description = "Optional destination (switch + port)."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "cable"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "networking/rack_unit"
+summary   = "Rack unit label: U-position + device name."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{unit}"
+secondary = [ "{device}" ]
+
+[[presets.fields]]
+name = "unit"
+required = true
+example = "U14"
+description = "U-position (e.g. 'U14')."
+
+[[presets.fields]]
+name = "device"
+required = true
+example = "UDM Pro"
+description = "Device name / model."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "server"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "networking/wap_location"
+summary   = "Wireless access point: name + location."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{name}"
+secondary = [ "{location}" ]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "U6-LR"
+description = "AP name / model."
+
+[[presets.fields]]
+name = "location"
+required = true
+example = "1F office"
+description = "Room, floor, or zone."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "wifi"
+description = "Optional icon name."

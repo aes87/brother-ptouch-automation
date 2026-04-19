@@ -82,7 +82,7 @@ def test_external_pack_cannot_shadow_builtin():
                return_value=iter([("rogue_kitchen", shadow)])):
         reg = default_registry()
     # Built-in wins.
-    assert reg.packs["kitchen"].version == "0.1.0"
+    assert reg.packs["kitchen"].version == "0.2.0"
 
 
 def test_two_external_packs_with_same_name_are_reported_not_fatal():

@@ -1,19 +1,15 @@
-"""Calibration pack — instrument cal stickers, certificate IDs, thermometer checks."""
+"""Calibration pack — instrument cal stickers, certificate IDs, thermometer checks. All preset-driven."""
 
 from __future__ import annotations
 
-from label_printer.templates.calibration.cert_id import CertIdTemplate
-from label_printer.templates.calibration.instrument_cal import InstrumentCalTemplate
-from label_printer.templates.calibration.thermometer_cal import ThermometerCalTemplate
+from pathlib import Path
+
 from label_printer.templates.pack import TemplatePack
+from label_printer.templates.preset import load_presets
 
 PACK = TemplatePack(
     name="calibration",
-    version="0.1.0",
+    version="0.2.0",
     summary="Calibration labels — instrument cal, cert IDs, thermometer checks.",
-    templates=(
-        InstrumentCalTemplate(),
-        CertIdTemplate(),
-        ThermometerCalTemplate(),
-    ),
+    templates=tuple(load_presets(Path(__file__).parent / "presets.toml")),
 )

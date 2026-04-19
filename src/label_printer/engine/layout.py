@@ -204,6 +204,7 @@ def render_two_line_label(
     secondary_font: str | Path | None = None,
     max_width_mm: float = 120.0,
     padding_mm: float = 6.0,
+    secondary_ratio: float = 0.28,
 ) -> Image.Image:
     """Render a bold-on-top, subtitle-below label with optional left-side icon.
 
@@ -213,7 +214,7 @@ def render_two_line_label(
     QR codes) stay bespoke.
     """
 
-    layout = TwoLineLayout(tape=tape)
+    layout = TwoLineLayout(tape=tape, secondary_ratio=secondary_ratio)
     p_font_path = primary_font if primary_font is not None else DEFAULT_BOLD
     s_font_path = secondary_font if secondary_font is not None else DEFAULT_FONT
 

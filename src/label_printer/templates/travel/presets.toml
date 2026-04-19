@@ -1,0 +1,90 @@
+[[presets]]
+qualified = "travel/luggage_tag"
+summary   = "Luggage / gear tag: name + contact (phone or email)."
+layout    = "two_line"
+default_tape = 18
+icon_field = "icon"
+max_width_mm = 180
+primary   = "{name}"
+secondary = [ "{contact}" ]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "aes87"
+description = "Owner name."
+
+[[presets.fields]]
+name = "contact"
+required = true
+example = "aesthe@example.com"
+description = "Phone or email."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "luggage"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "travel/gear_bag"
+summary   = "Gear bag: bag identifier + purpose / trip."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{bag}"
+secondary = [ "{purpose}" ]
+
+[[presets.fields]]
+name = "bag"
+required = true
+example = "Peak Design 30L"
+description = "Bag identifier."
+
+[[presets.fields]]
+name = "purpose"
+required = true
+example = "Banff 2026"
+description = "Trip / use-case."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "briefcase"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "travel/power_bank"
+summary   = "Power bank: capacity + last-charged date."
+layout    = "two_line"
+icon_field = "icon"
+primary_parts = [
+  { if = "model", text = "{model} · " },
+  "{capacity_mah} mAh",
+]
+secondary = [ "charged {charged}" ]
+
+[[presets.fields]]
+name = "capacity_mah"
+required = true
+example = "20000"
+description = "Capacity in mAh."
+
+[[presets.fields]]
+name = "charged"
+required = true
+example = "2026-04-15"
+description = "Last charged date."
+
+[[presets.fields]]
+name = "model"
+required = false
+example = "Anker 737"
+description = "Optional model name."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "battery"
+description = "Optional icon name."

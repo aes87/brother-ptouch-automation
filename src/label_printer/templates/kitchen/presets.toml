@@ -1,0 +1,128 @@
+# Kitchen pack — pantry, spice, leftover, freezer.
+# All four are two-line labels; only leftover needs a computed "eat by".
+
+[[presets]]
+qualified = "kitchen/pantry_jar"
+summary   = "Pantry item with purchase date and optional expiry (+ optional icon)."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{name}"
+secondary = [
+  "{purchased}",
+  { if = "expires", text = " · exp {expires}" },
+]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "AP Flour"
+description = "Item name (e.g. 'AP Flour', 'Brown Rice')."
+
+[[presets.fields]]
+name = "purchased"
+required = true
+example = "2026-04-19"
+description = "Purchase date (YYYY-MM-DD)."
+
+[[presets.fields]]
+name = "expires"
+required = false
+example = "2027-04-19"
+description = "Optional expiry date."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "wheat"
+description = "Optional Lucide icon name (e.g. 'wheat', 'egg', 'leaf'). Requires the [icons] extra."
+
+
+[[presets]]
+qualified = "kitchen/spice"
+summary   = "Spice label: name + optional origin + best-by."
+layout    = "two_line"
+primary   = "{name}"
+secondary_join = " · "
+secondary = [
+  { if = "origin",  text = "{origin}" },
+  { if = "best_by", text = "bb {best_by}" },
+]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "Smoked Paprika"
+description = "Spice name."
+
+[[presets.fields]]
+name = "origin"
+required = false
+example = "Spain"
+description = "Origin / variety."
+
+[[presets.fields]]
+name = "best_by"
+required = false
+example = "2027-01"
+description = "Best-by date."
+
+
+[[presets]]
+qualified = "kitchen/leftover"
+summary   = "Leftovers: contents + cooked date + auto-computed eat-by."
+layout    = "two_line"
+primary   = "{contents}"
+secondary = [ "{cooked} → eat by {eat_by}" ]
+
+[[presets.derived]]
+name       = "eat_by"
+kind       = "date_offset"
+from_field = "cooked"
+days_field = "eat_within_days"
+
+[[presets.fields]]
+name = "contents"
+required = true
+example = "Chili"
+description = "What's in the container."
+
+[[presets.fields]]
+name = "cooked"
+required = true
+example = "2026-04-19"
+description = "Date cooked (YYYY-MM-DD)."
+
+[[presets.fields]]
+name = "eat_within_days"
+required = false
+default = 4
+description = "Days until eat-by (default 4)."
+
+
+[[presets]]
+qualified = "kitchen/freezer"
+summary   = "Freezer label: contents + frozen date + optional portion size."
+layout    = "two_line"
+primary   = "{contents}"
+secondary = [
+  "frozen {frozen}",
+  { if = "portion", text = " · {portion}" },
+]
+
+[[presets.fields]]
+name = "contents"
+required = true
+example = "Bolognese"
+description = "What's in the package."
+
+[[presets.fields]]
+name = "frozen"
+required = true
+example = "2026-04-19"
+description = "Date frozen."
+
+[[presets.fields]]
+name = "portion"
+required = false
+example = "2 serves"
+description = "Portion descriptor."

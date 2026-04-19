@@ -1,0 +1,30 @@
+[[presets]]
+qualified = "electronics/component_bin"
+summary   = "Parts-bin label: value + footprint + optional tolerance."
+layout    = "two_line"
+secondary_ratio = 0.32
+max_width_mm = 80
+padding_mm = 5
+primary   = "{value}"
+secondary = [
+  "{footprint}",
+  { if = "tolerance", text = " · {tolerance}" },
+]
+
+[[presets.fields]]
+name = "value"
+required = true
+example = "10kΩ"
+description = "Component value."
+
+[[presets.fields]]
+name = "footprint"
+required = true
+example = "0805"
+description = "Package."
+
+[[presets.fields]]
+name = "tolerance"
+required = false
+example = "1%"
+description = "Tolerance."

@@ -1,0 +1,88 @@
+[[presets]]
+qualified = "garden/seed_packet"
+summary   = "Seed packet: variety + sow-by date + optional year."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{variety}"
+secondary = [
+  { if = "year", text = "{year} · " },
+  "sow by {sow_by}",
+]
+
+[[presets.fields]]
+name = "variety"
+required = true
+example = "Brandywine tomato"
+description = "Cultivar or variety."
+
+[[presets.fields]]
+name = "sow_by"
+required = true
+example = "2026-05-15"
+description = "Sow-by date."
+
+[[presets.fields]]
+name = "year"
+required = false
+example = "2025"
+description = "Harvest year."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "sprout"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "garden/plant_tag"
+summary   = "Plant tag for a pot or seed tray."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{name}"
+secondary = [ "planted {planted}" ]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "Basil"
+description = "Plant name."
+
+[[presets.fields]]
+name = "planted"
+required = true
+example = "2026-04-15"
+description = "Date planted or transplanted."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "leaf"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "garden/row_marker"
+summary   = "Row marker: crop + variety for outdoor beds."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{crop}"
+secondary = [ "{variety}" ]
+
+[[presets.fields]]
+name = "crop"
+required = true
+example = "Tomato"
+description = "Crop name."
+
+[[presets.fields]]
+name = "variety"
+required = true
+example = "Cherokee Purple"
+description = "Variety / cultivar."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "carrot"
+description = "Optional icon name."

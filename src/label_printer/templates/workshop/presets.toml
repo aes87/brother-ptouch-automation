@@ -1,0 +1,94 @@
+[[presets]]
+qualified = "workshop/tool_id"
+summary   = "Workshop tool ID: name + owner + optional project."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{name}"
+secondary = [
+  "{owner}",
+  { if = "project", text = " · {project}" },
+]
+
+[[presets.fields]]
+name = "name"
+required = true
+example = "Cordless drill"
+description = "Tool name."
+
+[[presets.fields]]
+name = "owner"
+required = true
+example = "aes / garage"
+description = "Owner or location."
+
+[[presets.fields]]
+name = "project"
+required = false
+example = "Makita set"
+description = "Optional project or set."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "wrench"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "workshop/torque_cal"
+summary   = "Torque wrench calibration: tool + range + last-cal date."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{tool} · {range_nm} N·m"
+secondary = [ "cal {last_cal}" ]
+
+[[presets.fields]]
+name = "tool"
+required = true
+example = 'CDI 1/2"'
+description = "Tool name."
+
+[[presets.fields]]
+name = "range_nm"
+required = true
+example = "20-100"
+description = "Torque range, N·m."
+
+[[presets.fields]]
+name = "last_cal"
+required = true
+example = "2026-03-10"
+description = "Date of last calibration (YYYY-MM-DD)."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "gauge"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "workshop/first_aid"
+summary   = "First-aid kit: contents identifier + expiry / refill date."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{kit}"
+secondary = [ "check by {expires}" ]
+
+[[presets.fields]]
+name = "kit"
+required = true
+example = "Garage kit #2"
+description = "Kit identifier."
+
+[[presets.fields]]
+name = "expires"
+required = true
+example = "2027-08"
+description = "Earliest-expiring item."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "shield"
+description = "Optional icon name."

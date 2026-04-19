@@ -1,0 +1,104 @@
+[[presets]]
+qualified = "three_d_printing/filament_spool"
+summary   = "Filament spool: material + colour + brand + opened + optional temps."
+layout    = "two_line"
+secondary_ratio = 0.33
+max_width_mm = 140
+primary   = "{material} · {color}"
+secondary_join = " · "
+secondary = [
+  "{brand}",
+  "opened {opened}",
+  { if = "nozzle_temp", text = "N {nozzle_temp}°C" },
+  { if = "bed_temp",    text = "B {bed_temp}°C" },
+]
+
+[[presets.fields]]
+name = "material"
+required = true
+example = "PLA"
+description = "Filament material."
+
+[[presets.fields]]
+name = "color"
+required = true
+example = "Obsidian Black"
+description = "Colour name."
+
+[[presets.fields]]
+name = "brand"
+required = true
+example = "Bambu"
+description = "Brand name."
+
+[[presets.fields]]
+name = "opened"
+required = true
+example = "2026-04-19"
+description = "Date opened."
+
+[[presets.fields]]
+name = "nozzle_temp"
+required = false
+example = "200-220"
+description = "Nozzle temp range °C."
+
+[[presets.fields]]
+name = "bed_temp"
+required = false
+example = "60"
+description = "Bed temp °C."
+
+
+[[presets]]
+qualified = "three_d_printing/print_bin"
+summary   = "Print bin label: part name + optional project + quantity."
+layout    = "two_line"
+max_width_mm = 120
+primary   = "{part}"
+secondary_join = " · "
+secondary = [
+  "×{qty}",
+  { if = "project", text = "{project}" },
+]
+
+[[presets.fields]]
+name = "part"
+required = true
+example = "Fan tub clip v2"
+description = "Printed part name."
+
+[[presets.fields]]
+name = "project"
+required = false
+example = "fan-tub-adapter"
+description = "Project it belongs to."
+
+[[presets.fields]]
+name = "qty"
+required = false
+default = "1"
+description = "Quantity in the bin."
+
+
+[[presets]]
+qualified = "three_d_printing/tool_tag"
+summary   = "Tool tag: tool name + optional owner."
+layout    = "two_line"
+max_width_mm = 100
+primary   = "{tool}"
+secondary = [
+  { if = "owner", text = "{owner}" },
+]
+
+[[presets.fields]]
+name = "tool"
+required = true
+example = "Calipers"
+description = "Tool name."
+
+[[presets.fields]]
+name = "owner"
+required = false
+example = "aes / 3d-printing"
+description = "Owning person or project."

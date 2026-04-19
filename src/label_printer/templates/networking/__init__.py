@@ -1,19 +1,15 @@
-"""Networking pack — patch ports, rack units, WAP locations."""
+"""Networking pack — patch ports, rack units, WAP locations. All preset-driven."""
 
 from __future__ import annotations
 
-from label_printer.templates.networking.patch_port import PatchPortTemplate
-from label_printer.templates.networking.rack_unit import RackUnitTemplate
-from label_printer.templates.networking.wap_location import WapLocationTemplate
+from pathlib import Path
+
 from label_printer.templates.pack import TemplatePack
+from label_printer.templates.preset import load_presets
 
 PACK = TemplatePack(
     name="networking",
-    version="0.1.0",
+    version="0.2.0",
     summary="Network labels — patch ports, rack units, access points.",
-    templates=(
-        PatchPortTemplate(),
-        RackUnitTemplate(),
-        WapLocationTemplate(),
-    ),
+    templates=tuple(load_presets(Path(__file__).parent / "presets.toml")),
 )

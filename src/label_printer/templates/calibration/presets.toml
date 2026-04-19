@@ -1,0 +1,95 @@
+[[presets]]
+qualified = "calibration/instrument_cal"
+summary   = "Instrument calibration: instrument + next-due date + owner."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{instrument}"
+secondary_parts_note = "owner inserted before 'next {date}' when set"
+secondary = [
+  { if = "owner", text = "{owner} · " },
+  "next {next_due}",
+]
+
+[[presets.fields]]
+name = "instrument"
+required = true
+example = "Fluke 87V"
+description = "Instrument name."
+
+[[presets.fields]]
+name = "next_due"
+required = true
+example = "2027-05-01"
+description = "Next calibration due."
+
+[[presets.fields]]
+name = "owner"
+required = false
+example = "QA lab"
+description = "Optional owner / lab."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "gauge"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "calibration/cert_id"
+summary   = "Calibration certificate reference: cert number + issuer."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{cert_no}"
+secondary = [ "{issuer}" ]
+
+[[presets.fields]]
+name = "cert_no"
+required = true
+example = "CAL-2026-00421"
+description = "Certificate number."
+
+[[presets.fields]]
+name = "issuer"
+required = true
+example = "ISO/IEC 17025"
+description = "Issuing lab / standard."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "file-text"
+description = "Optional icon name."
+
+
+[[presets]]
+qualified = "calibration/thermometer_cal"
+summary   = "Thermometer calibration: instrument + last ice/steam check."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{instrument} · ice {ice_point_c}°C"
+secondary = [ "checked {checked}" ]
+
+[[presets.fields]]
+name = "instrument"
+required = true
+example = "Thermapen ONE"
+description = "Thermometer identifier."
+
+[[presets.fields]]
+name = "ice_point_c"
+required = true
+example = "0.1"
+description = "Ice-point reading °C."
+
+[[presets.fields]]
+name = "checked"
+required = true
+example = "2026-03-28"
+description = "Date of last check."
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "thermometer"
+description = "Optional icon name."
