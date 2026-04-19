@@ -21,6 +21,7 @@ except ImportError as e:  # pragma: no cover
     ) from e
 
 from label_printer import encode_job
+from label_printer.engine.compose import compose_extras, strip_template_handled
 from label_printer.tape import TapeWidth
 from label_printer.templates import default_registry
 
@@ -43,6 +44,17 @@ class RenderRequest(BaseModel):
     template: str
     tape_mm: int = 12
     fields: dict[str, Any] = {}
+    # Optional post-render extras composed onto the right edge of any label.
+    link: str | None = None
+    image: str | None = None
+
+
+def _render_body_with_extras(template, fields: dict, tape: TapeWidth,
+                             link: str | None, image: str | None):
+    extras = {k: v for k, v in {"link": link, "image": image}.items() if v}
+    extras = strip_template_handled(extras, template)
+    body = template.render(template.validate(fields), tape)
+    return compose_extras(body, extras, tape)
 
 
 class PrintRequest(RenderRequest):
@@ -87,7 +99,7 @@ def render(req: RenderRequest, authorization: str | None = Header(default=None))
     except KeyError as e:
         raise HTTPException(404, str(e)) from e
     tape = TapeWidth(4 if req.tape_mm in (3, 4) else req.tape_mm)
-    image = template.render(template.validate(req.fields), tape)
+    image = _render_body_with_extras(template, req.fields, tape, req.link, req.image)
     buf = io.BytesIO()
     image.save(buf, format="PNG")
     return Response(buf.getvalue(), media_type="image/png")
@@ -102,7 +114,7 @@ def print_(req: PrintRequest, authorization: str | None = Header(default=None)) 
     except KeyError as e:
         raise HTTPException(404, str(e)) from e
     tape = TapeWidth(4 if req.tape_mm in (3, 4) else req.tape_mm)
-    image = template.render(template.validate(req.fields), tape)
+    image = _render_body_with_extras(template, req.fields, tape, req.link, req.image)
     data = encode_job(image, tape)
 
     if req.send:

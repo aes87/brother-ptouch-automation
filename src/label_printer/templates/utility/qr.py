@@ -19,6 +19,7 @@ from label_printer.templates.base import Template, TemplateField, TemplateMeta
 
 
 class QrTemplate(Template):
+    handles_extras = frozenset({"link"})
     meta = TemplateMeta(
         category="utility",
         name="qr",

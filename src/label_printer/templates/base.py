@@ -40,6 +40,11 @@ class TemplateMeta:
 
 class Template(ABC):
     meta: TemplateMeta
+    # Names of post-render ``compose_extras`` keys this template handles
+    # internally (e.g. ``utility/qr`` renders its own QR from the ``data``
+    # field). Callers should strip these keys from the external extras dict
+    # before composing to avoid double-rendering.
+    handles_extras: frozenset[str] = frozenset()
 
     @abstractmethod
     def render(self, data: dict[str, Any], tape: TapeWidth) -> Image.Image:

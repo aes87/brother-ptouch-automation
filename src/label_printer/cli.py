@@ -9,9 +9,19 @@ from PIL import Image
 
 from label_printer import RasterOptions, TapeWidth, encode_batch, encode_job
 from label_printer import state as state_mod
+from label_printer.engine.compose import compose_extras, strip_template_handled
 from label_printer.tape import geometry_for
 from label_printer.templates import default_registry
 from label_printer.transport.dryrun import DryRunTransport
+
+
+def _render_with_extras(template, data: dict, tape: TapeWidth,
+                        link: str | None, image: str | None) -> Image.Image:
+    """Render the template, then compose any post-render extras onto the body."""
+    extras = {k: v for k, v in {"link": link, "image": image}.items() if v}
+    extras = strip_template_handled(extras, template)
+    body = template.render(data, tape)
+    return compose_extras(body, extras, tape)
 
 
 def _tape_from_mm(mm: int) -> TapeWidth:
@@ -86,11 +96,16 @@ def show(qualified: str) -> None:
 @click.argument("qualified")
 @click.option("--tape", "tape_mm", type=int, default=None, help="Tape width in mm.")
 @click.option("-f", "--field", "fields", multiple=True, help="key=value template field.")
+@click.option("--link", type=str, default=None,
+              help="QR payload appended to the right edge (short-form, URL, or opaque string).")
+@click.option("--image", "image_path", type=click.Path(exists=True, dir_okay=False), default=None,
+              help="Path to a bitmap appended to the right edge (fit to tape height).")
 @click.option("--png-out", type=click.Path(path_type=Path), default=None,
               help="Where to save the rendered PNG preview.")
 @click.option("--bin-out", type=click.Path(path_type=Path), default=None,
               help="Where to save the raw command stream.")
 def render_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
+                    link: str | None, image_path: str | None,
                     png_out: Path | None, bin_out: Path | None) -> None:
     """Render a template to a PNG and/or raster command stream (no printing)."""
     reg = default_registry()
@@ -101,7 +116,7 @@ def render_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...]
 
     tape = _tape_from_mm(tape_mm) if tape_mm else template.meta.default_tape
     data = template.validate(_parse_fields(fields))
-    image = template.render(data, tape)
+    image = _render_with_extras(template, data, tape, link, image_path)
 
     if png_out is None and bin_out is None:
         png_out = Path(f"out_{qualified.replace('/', '_')}_{int(tape)}mm.png")
@@ -122,6 +137,10 @@ def render_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...]
 @click.argument("qualified")
 @click.option("--tape", "tape_mm", type=int, default=None)
 @click.option("-f", "--field", "fields", multiple=True, help="key=value template field.")
+@click.option("--link", type=str, default=None,
+              help="QR payload appended to the right edge (short-form, URL, or opaque string).")
+@click.option("--image", "image_path", type=click.Path(exists=True, dir_okay=False), default=None,
+              help="Path to a bitmap appended to the right edge (fit to tape height).")
 @click.option(
     "--send/--dry-run",
     default=False,
@@ -138,6 +157,7 @@ def render_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...]
 @click.option("--bin-out", type=click.Path(path_type=Path), default=Path("out.bin"),
               help="Dry-run output path (ignored when --send is set).")
 def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
+                   link: str | None, image_path: str | None,
                    send: bool, transport_name: str, bin_out: Path) -> None:
     """Encode + (dry-run|send) a template-based label.
 
@@ -153,7 +173,7 @@ def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
 
     tape = _tape_from_mm(tape_mm) if tape_mm else template.meta.default_tape
     data = template.validate(_parse_fields(fields))
-    image = template.render(data, tape)
+    image = _render_with_extras(template, data, tape, link, image_path)
     cmd_bytes = encode_job(image, tape)
 
     if not send:

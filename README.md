@@ -236,6 +236,22 @@ Claude picks the right template, proposes fields, dry-renders a PNG for you to r
 
 ![Render pipeline — Template.render produces a tape-sized Pillow Image, converted to monochrome (threshold 128), fit-checked against tape dimensions, then packed into 128-pin MSB-first raster bytes. Each 16-byte line branches: all-zero lines collapse to a single 0x5A Z-shortcut; non-zero lines get 0x47 + length + PackBits (TIFF-style compression). Both paths merge into the command stream, which is wrapped in the prologue (init · mode · info · margin) and terminated with 0x1A (print & feed). Amber accents on entry, branch, and final output; teal highlights the Z-shortcut shortcut path.](./docs/images/lp-render-pipeline.png)
 
+## QR codes and bitmaps on any template
+
+Two global options — `--link` and `--image` — compose onto the right edge of *any* template's output, so you do not need a QR-specific template per category. `--link` takes a short-form (`vault:...`, `gh:...`), a URL, or any opaque string, and renders it as a QR sized to tape height. `--image` takes a path to a bitmap and fits it to tape height (monochrome, aspect preserved).
+
+```bash
+# Pantry label plus a QR that Claude can later resolve to the vault note
+lp render kitchen/spice -f name="Smoked Paprika" -f best_by=2027-03 \
+  --link vault:kitchen/spices/paprika --png-out preview.png
+
+# Tool tag with a personal logo on the right
+lp render three_d_printing/tool_tag -f tool="Calipers" \
+  --image ~/assets/logo.png --png-out preview.png
+```
+
+Templates that render their own QR (`utility/qr`, `electronics/cable_flag_qr`) declare `handles_extras = {"link"}` and silently drop the external `--link` so you don't get a duplicate.
+
 ## Extending it
 
 ### Add a single template to an existing pack

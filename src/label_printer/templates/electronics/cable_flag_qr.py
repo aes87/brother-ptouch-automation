@@ -63,6 +63,7 @@ _SMALL_RATIO = 0.32
 
 
 class CableFlagQrTemplate(Template):
+    handles_extras = frozenset({"link"})
     meta = TemplateMeta(
         category="electronics",
         name="cable_flag_qr",

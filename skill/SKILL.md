@@ -59,6 +59,26 @@ lp print kitchen/pantry_jar \
 
 **`--send` is the only way tape moves.** Without it, `lp print` is always a dry-run — it encodes + writes bytes but never drives the transport. Never pass `--send` without the user's explicit approval of the preview.
 
+### Adding a QR or a bitmap to any template
+
+Two global flags compose onto the right edge of *any* template's output — no need for a QR-specific template:
+
+```bash
+# QR pointing at canonical context (Claude can decode the short-form later)
+lp render kitchen/spice \
+  -f name="Smoked Paprika" -f best_by=2027-03 \
+  --link vault:kitchen/spices/paprika \
+  --png-out /tmp/label_preview.png
+
+# Arbitrary bitmap (icon, logo, photo) scaled to tape height
+lp render three_d_printing/tool_tag \
+  -f tool="Calipers" \
+  --image ~/assets/aes-logo.png \
+  --png-out /tmp/label_preview.png
+```
+
+`--link` accepts short-forms (`vault:...`, `gh:...`), URLs, or any opaque string. `--image` takes a path to a PNG/JPEG; it is fitted to tape height and threshold-converted to monochrome. Both flags also work on `lp print`. Templates that render their own QR (`utility/qr`, `electronics/cable_flag_qr`) silently ignore `--link` to avoid a double QR.
+
 ## Rules
 
 - **Always dry-render first.** Show the user the PNG, get an OK, then print. Even after hardware is wired up, never skip the preview.
