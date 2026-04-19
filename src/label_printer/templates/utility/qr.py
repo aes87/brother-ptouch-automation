@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import qrcode
 from PIL import Image
-from qrcode.constants import ERROR_CORRECT_M
 
 from label_printer.engine.layout import (
     DEFAULT_BOLD,
@@ -15,17 +13,9 @@ from label_printer.engine.layout import (
     mm_to_dots,
     text_width,
 )
+from label_printer.engine.qr import render_qr
 from label_printer.tape import TapeWidth, geometry_for
 from label_printer.templates.base import Template, TemplateField, TemplateMeta
-
-
-def _render_qr(data: str, pixels: int) -> Image.Image:
-    """Render a QR code and scale it to exactly `pixels` square, 1-bit."""
-    qr = qrcode.QRCode(version=None, error_correction=ERROR_CORRECT_M, box_size=4, border=1)
-    qr.add_data(data)
-    qr.make(fit=True)
-    big = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-    return big.resize((pixels, pixels), Image.Resampling.NEAREST)
 
 
 class QrTemplate(Template):
@@ -47,7 +37,7 @@ class QrTemplate(Template):
 
         geom = geometry_for(tape)
         qr_size = geom.print_pins
-        qr_img = _render_qr(payload, qr_size)
+        qr_img = render_qr(payload, qr_size)
 
         caption_gap = mm_to_dots(2) if caption else 0
         if caption:

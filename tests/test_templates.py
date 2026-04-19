@@ -15,6 +15,10 @@ _FIXTURES: dict[str, dict[str, object]] = {
     "kitchen/leftover":        {"contents": "Chili", "cooked": "2026-04-19", "eat_within_days": 4},
     "kitchen/freezer":         {"contents": "Bolognese", "frozen": "2026-04-19", "portion": "2 serves"},
     "electronics/cable_flag":  {"source": "NAS", "dest": "SWITCH p3"},
+    "electronics/cable_flag_qr": {
+        "title": "NAS → SW p3", "date": "2026-04-19",
+        "details": "VLAN 20\npatch A-14", "link": "vault:networking/nas-eth0",
+    },
     "electronics/component_bin": {"value": "10kΩ", "footprint": "0805", "tolerance": "1%"},
     "electronics/psu_polarity": {"voltage": "12V", "current": "2A"},
     "three_d_printing/filament_spool": {
