@@ -190,8 +190,8 @@ footer a { color: var(--fg-muted); }
 <header class="hero">
   <div class="container">
     <div class="eyebrow">aes87/brother-ptouch-automation</div>
-    <h1>Label automation that <span class="accent">actually respects the printer</span></h1>
-    <p class="lead">Template-driven, byte-exact label generation for the Brother <strong>PT-P750W</strong> and its raster-compatible siblings (PT-P710BT, PT-E550W). One engine, three surfaces — CLI, HTTP service, Claude Code skill. Dry-run by default. Half-cut-aware batch printing. Status-gated sends.</p>
+    <h1>A small, flexible engine that <span class="accent">prints labels</span></h1>
+    <p class="lead">Byte-exact raster encoder for the Brother <strong>PT-P750W</strong> (primary; PT-P710BT and PT-E550W also work). A layout library, a TOML preset format for declaring new label types, and a QR / image decorator that snaps onto any label. Adding a new category is usually ~10 lines of data, not a Python class. Driveable from a CLI, an HTTP service, or a Claude Code skill. Dry-run by default.</p>
     <div class="cta-row">
       <a class="btn primary" href="https://github.com/aes87/brother-ptouch-automation">View on GitHub →</a>
       <a class="btn" href="#templates">Template gallery</a>
@@ -209,18 +209,18 @@ footer a { color: var(--fg-muted); }
 
 <section>
   <div class="container">
-    <h2>What makes it different</h2>
-    <p class="section-lead">Everything the P-touch Editor app isn't.</p>
+    <h2>How it composes</h2>
+    <p class="section-lead">Four layers, deliberately small.</p>
     <div class="features">
-      <div class="feature"><h3>Template-first</h3><p>Every label is a typed Python class with a validated field schema — not a drawing in a GUI you have to redo each time. 36 ship today; adding a pack is one pip package.</p></div>
-      <div class="feature"><h3>Byte-exact encoder</h3><p>Raster command stream is cross-checked against the <code>treideme/brother_pt</code> reference in CI. The bytes that hit the printer are verified, not guessed.</p></div>
-      <div class="feature"><h3>Half-cut batch jobs</h3><p><code>lp batch rack.json</code> chains N labels into one print run with partial cuts between each. A whole spice rack comes off the printer as a single strip.</p></div>
-      <div class="feature"><h3>Tape-status autodetect</h3><p>Parses the printer's 32-byte status reply. Real sends can be gated on "the loaded tape matches what this job wants" — no more ruined cassettes.</p></div>
+      <div class="feature"><h3>1. Raster engine</h3><p>Byte-exact against Brother's command reference, cross-checked against <code>treideme/brother_pt</code> in CI. Handles every TZe width (3.5–24&nbsp;mm), half-cut, multi-label batches, and the 32-byte status packet so real sends can be gated on "loaded tape matches the job."</p></div>
+      <div class="feature"><h3>2. Layout helpers</h3><p>A small set of pure functions — <code>render_two_line_label</code>, <code>TwoLineLayout</code>, <code>fit_text_to_box</code>, icon placement, QR composition — that compose a Pillow image at 180&nbsp;DPI for a given tape width.</p></div>
+      <div class="feature"><h3>3. TOML presets</h3><p>~30 of the shipped labels are declarative data: a schema, a primary line, a secondary line, optional conditionals. Adding a new one is an entry in <code>presets.toml</code>. No Python required.</p></div>
+      <div class="feature"><h3>4. Bespoke Python (when needed)</h3><p>The few labels that need custom geometry — cable flags that wrap around a cable, polarity icons, GHS hazard pictograms, the QR + image primitives — stay as Python classes. Five of the 36 ship today.</p></div>
+      <div class="feature"><h3>Decorators, not duplicates</h3><p>Cross-cutting additions (QR codes, arbitrary bitmaps) are <code>--link</code> / <code>--image</code> flags that snap onto <em>any</em> template's output. A QR next to a pantry jar doesn't need a new template.</p></div>
+      <div class="feature"><h3>Dry-run by default</h3><p><code>lp print</code> and <code>lp batch</code> encode + write bytes to a file but never drive the printer unless you add <code>--send</code>. Same for <code>POST /print</code> — <code>send: true</code> is opt-in.</p></div>
       <div class="feature"><h3>Wire-aware cable flags</h3><p>Pass <code>wire=ethernet</code> or <code>18AWG</code> and the wrap section is sized to the cable's outer diameter. 40+ keywords plus every AWG built in.</p></div>
-      <div class="feature"><h3>Icons, opt-in</h3><p>80 curated Lucide icons bundled. Install the full ~1500 Lucide set or ~7000 Material Design Icons with one <code>lp icons install-*</code> command.</p></div>
-      <div class="feature"><h3>QR + raw images</h3><p><code>utility/qr</code> and <code>utility/image</code> are first-class templates — no "design it in Photoshop first."</p></div>
-      <div class="feature"><h3>Dry-run by default</h3><p><code>lp print</code> and <code>lp batch</code> encode + write bytes to a file but never drive the printer unless you add <code>--send</code>.</p></div>
-      <div class="feature"><h3>Pack plug-in system</h3><p>Ship your own templates as a separate pip package. External packs register via standard Python entry points. Supply-chain-aware (safe-mode env-var).</p></div>
+      <div class="feature"><h3>Icons, opt-in</h3><p>~50 curated Lucide icons bundled. Install the full ~1500 Lucide set or ~7000 Material Design Icons with one <code>lp icons install-*</code> command.</p></div>
+      <div class="feature"><h3>Pack plug-in system</h3><p>Ship your own templates — preset + bespoke mix — as a separate pip package. External packs register via standard Python entry points, with a safe-mode env var for supply-chain caution.</p></div>
     </div>
   </div>
 </section>

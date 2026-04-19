@@ -4,9 +4,9 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/aes87/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/aes87/brother-ptouch-automation/actions/workflows/ci.yml)
 [![license](https://img.shields.io/github/license/aes87/brother-ptouch-automation?style=for-the-badge)](LICENSE)
 
-**Template-driven label automation for the Brother PT-P750W** (primary target) and its raster-compatible siblings **PT-P710BT** and **PT-E550W**. One engine, three surfaces — a CLI, an HTTP service, and a Claude Code skill — on top of a byte-exact raster encoder.
+**A small, flexible label engine** for the Brother **PT-P750W** (primary target; PT-P710BT and PT-E550W also work). One byte-exact raster core, one layout engine, a tiny TOML preset format for declaring new label types, and a QR / image decorator that snaps onto *any* label — all driveable from a CLI, an HTTP service, or a Claude Code skill.
 
-Print a pantry jar, a cable flag sized to the exact cable it's wrapping, a filament spool, a QR code, or a twenty-label spice rack batch — from a terminal, a web request, or a chat message.
+Adding a new label category is usually ~10 lines of TOML, not a Python class. Adding a QR code or an inline image to an existing label is a flag, not a new template. The fiddly stuff (cable-flag wrap geometry, polarity icons, GHS hazard symbols) stays in Python where it belongs; everything else is data.
 
 > ### 🌐 [Live demo: browse every template →](https://aes87.github.io/brother-ptouch-automation/)
 >
@@ -17,6 +17,17 @@ Print a pantry jar, a cable flag sized to the exact cable it's wrapping, a filam
 ![3d filament spool](docs/previews/three_d_printing_filament_spool_12mm.png)
 ![electronics cable flag](docs/previews/electronics_cable_flag_12mm.png)
 
+## How it composes
+
+The system is deliberately small. Four things, layered:
+
+1. **The raster engine.** Byte-exact against Brother's official command reference, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI. Handles every TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm), half-cut, multi-label batches with `0x0C` separators, and 32-byte status parsing so real sends can be gated on "the loaded tape matches the job."
+2. **The layout helpers.** `render_two_line_label`, `TwoLineLayout`, `fit_text_to_box`, icon placement, QR composition — a handful of pure functions that compose a `Pillow.Image` at 180 DPI for a given tape width.
+3. **TOML presets.** ~30 of the shipped labels are declarative data: a `qualified` name, a schema, a primary / secondary line template, some optional conditionals. Adding a new one is an entry in a pack's `presets.toml` — no Python required. See [`docs/creating-a-preset.md`](docs/creating-a-preset.md).
+4. **Bespoke Python templates** for the few that need custom geometry — `electronics/cable_flag` (wire-OD-sized wrap section), `electronics/psu_polarity` (polarity icon), `workshop/hazard` (GHS pictograms), `utility/qr` / `utility/image`. These stay as classes so they can break out of the preset shape when they genuinely need to.
+
+Cross-cutting things — QR codes, arbitrary bitmaps — are **decorators** that snap onto any template via `--link` and `--image`, so they never have to be copy-pasted into each label. The whole library is 36 labels, but the engine treats new labels as cheap.
+
 ## Why
 
 The Brother P-touch Editor app is fine for a one-off, but it's terrible at the workflows you actually want:
@@ -25,36 +36,17 @@ The Brother P-touch Editor app is fine for a one-off, but it's terrible at the w
 - Printing from a script, a scheduled job, or a chatbot
 - Sharing a template library across projects
 - Getting the *same* label twice in a row, reliably
+- Reusing 90% of the design when you add a new label category
 
-This is a small, fast automation layer that fixes those. Templates are Python classes with validated field schemas. The raster encoder is byte-exact against Brother's official command reference. The three surfaces (CLI, HTTP service, Claude Code skill) all call the same engine, so a label triggered from Claude comes off the tape identical to one triggered from the shell.
+Templates have validated field schemas, dry-run is the default, and the three surfaces (CLI, HTTP service, Claude Code skill) all call the same engine — a label triggered from Claude comes off the tape identical to one triggered from the shell.
 
-## Features
+### Highlights
 
-### Engine
-- **Byte-exact** raster encoder, cross-checked against [`treideme/brother_pt`](https://github.com/treideme/brother_pt) in CI — every byte the printer receives is verified against a known-good reference at the raster-bytes layer
-- **Tape-aware** — print-head geometry handled for every supported TZe width (3.5 / 6 / 9 / 12 / 18 / 24 mm)
-- **Half-cut** — enabled by default on PT-P750W so chained labels come off the printer as a single strip attached by the liner; silently ignored on hardware without the mechanism
-- **Multi-label batch jobs** — one prologue, per-page raster blocks, `0x0C` separators, `0x1A` terminator. `lp batch spec.json` prints twenty spice-rack labels in one run with half-cuts between each.
-- **Tape-status autodetect** — parses the 32-byte status reply (loaded width, media type, tape colour, text colour, 7 distinct error flags). Real sends can be gated on "the loaded tape matches what this job wants" so you never waste tape on a mismatch.
-
-### Templates
-- **36 templates across 12 packs** — kitchen / electronics / 3D printing / utility / garden / networking / workshop / home-inventory / media / pet / travel / calibration. [Browse the interactive gallery](https://aes87.github.io/brother-ptouch-automation/).
-- **Wire-aware cable flags** — pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's outer diameter (π·OD + adhesive overlap); 40+ cable keywords plus AWG 0–30 built in
-- **QR codes + images** as first-class template types — no "design it in Photoshop first"
-- **Icons** — ~50 bundled Lucide icons that templates can opt in to via an `icon=` field; install the full Lucide (~1500) or Material Design Icons (~7000) sets with `lp icons install-lucide` / `lp icons install-mdi`
-- **Pack plug-in system** — ship your own templates as a separate pip package. External packs register via standard Python entry points. See [`docs/creating-a-pack.md`](docs/creating-a-pack.md).
-
-### Safety
-- **Dry-run by default** — `lp print` and `lp batch` encode + write bytes to a file but never drive the transport unless you add `--send`. The printer never moves unexpectedly.
-- **Supply-chain aware** — external template packs can be disabled with `LABEL_PRINTER_DISABLE_ENTRY_POINT_PACKS=1`; broken packs are isolated per-pack, one bad install never bricks the CLI
-
-### Surfaces
-- **`lp` CLI** — fast, scriptable, friendly
-- **HTTP service** — FastAPI with optional bearer-token auth, so the printer can live on one machine and clients call it from anywhere on the LAN
-- **Claude Code skill** — install the symlink and any Claude session can discover templates, propose labels, and print them
-
-### Quality
-- **170+ tests**, ruff clean, CI green on every push
+- **Dry-run by default.** `lp print` and `lp batch` encode + write bytes to a file but never drive the transport unless you add `--send`. The printer never moves unexpectedly.
+- **Wire-aware cable flags.** Pass `wire=ethernet` or `wire=18AWG` and the wrap section is sized to the cable's outer diameter (π·OD + adhesive overlap); 40+ keywords plus AWG 0–30 built in.
+- **Icons, opt-in.** ~50 curated Lucide icons bundled; full Lucide (~1500) or Material Design Icons (~7000) sets install with `lp icons install-lucide` / `lp icons install-mdi`.
+- **Pack plug-in system.** Ship your own templates as a separate pip package via standard entry points; broken packs are isolated and a safe-mode env var disables them wholesale. See [`docs/creating-a-pack.md`](docs/creating-a-pack.md).
+- **180+ tests**, ruff clean, CI green on every push.
 
 ## Architecture
 
@@ -64,26 +56,16 @@ This is a small, fast automation layer that fixes those. Templates are Python cl
 
 ## Template gallery
 
-**36 templates across 12 packs** — kitchen, electronics, 3D printing, utility, garden, networking, workshop, home-inventory, media, pet, travel, calibration.
+**36 templates across 12 packs** — kitchen, electronics, 3D printing, utility, garden, networking, workshop, home-inventory, media, pet, travel, calibration. A full catalog of rendered previews + field schemas + copy-paste CLI examples lives at the demo site; this README shows a small sample.
 
-👉 **[Interactive demo with every template, field schema, and copy-paste CLI example →](https://aes87.github.io/brother-ptouch-automation/)**
-
-A sample below. Every template renders at 180 DPI, drop straight onto a TZe cassette.
+👉 **[Interactive demo with every template →](https://aes87.github.io/brother-ptouch-automation/)**
 
 | Pack | Template | Preview |
 |---|---|---|
-| `kitchen/` | `pantry_jar` | ![](docs/previews/kitchen_pantry_jar_12mm.png) <br> with icon: ![](docs/previews/kitchen_pantry_jar_with_icon_12mm.png) |
-| `kitchen/` | `spice` | ![](docs/previews/kitchen_spice_12mm.png) |
-| `kitchen/` | `leftover` | ![](docs/previews/kitchen_leftover_12mm.png) |
-| `kitchen/` | `freezer` | ![](docs/previews/kitchen_freezer_12mm.png) |
-| `electronics/` | `cable_flag` | ![](docs/previews/electronics_cable_flag_12mm.png) |
-| `electronics/` | `component_bin` | ![](docs/previews/electronics_component_bin_12mm.png) |
-| `electronics/` | `psu_polarity` | ![](docs/previews/electronics_psu_polarity_12mm.png) |
+| `kitchen/` | `pantry_jar` (with icon) | ![](docs/previews/kitchen_pantry_jar_with_icon_12mm.png) |
+| `electronics/` | `cable_flag` (wrap sized to the cable) | ![](docs/previews/electronics_cable_flag_12mm.png) |
 | `three_d_printing/` | `filament_spool` | ![](docs/previews/three_d_printing_filament_spool_12mm.png) |
-| `three_d_printing/` | `print_bin` | ![](docs/previews/three_d_printing_print_bin_12mm.png) |
-| `three_d_printing/` | `tool_tag` | ![](docs/previews/three_d_printing_tool_tag_12mm.png) |
 | `utility/` | `qr` | ![](docs/previews/utility_qr_12mm.png) |
-| `utility/` | `image` | arbitrary bitmap + optional caption |
 
 ### Wire-aware cable flags
 
@@ -254,46 +236,50 @@ Templates that render their own QR (`utility/qr`, `electronics/cable_flag_qr`) d
 
 ## Extending it
 
-### Add a single template to an existing pack
+### Add a new label — the usual path (TOML preset)
 
-Drop a file in `src/label_printer/templates/<pack>/<name>.py` and register it in the pack's `__init__.py`:
+Two-line labels — which covers most of what people actually print — are declarative data, not Python. Add an entry to a pack's `presets.toml`:
 
-```python
-from PIL import Image
-from label_printer.engine.layout import (
-    LabelCanvas, TwoLineLayout, draw_row,
-    fit_text_to_box, load_font,
-    DEFAULT_BOLD, DEFAULT_FONT,
-    mm_to_dots, text_width,
-)
-from label_printer.tape import TapeWidth
-from label_printer.templates.base import Template, TemplateField, TemplateMeta
+```toml
+[[presets]]
+qualified = "garden/seed_packet"
+summary   = "Seed packet: variety + sow-by date + optional year."
+layout    = "two_line"
+icon_field = "icon"
+primary   = "{variety}"
+secondary = [
+  { if = "year", text = "{year} · " },
+  "sow by {sow_by}",
+]
 
+[[presets.fields]]
+name = "variety"
+required = true
+example = "Brandywine tomato"
 
-class SeedPacketTemplate(Template):
-    meta = TemplateMeta(
-        category="garden",
-        name="seed_packet",
-        summary="Seed packet: variety + sow-by.",
-        fields=[
-            TemplateField("variety", "Cultivar.", example="Brandywine tomato"),
-            TemplateField("sow_by", "Sow-by date.", example="2026-05-15"),
-        ],
-        default_tape=TapeWidth.MM_12,
-    )
+[[presets.fields]]
+name = "sow_by"
+required = true
+example = "2026-05-15"
 
-    def render(self, data, tape):
-        name = str(data["variety"])
-        sub = f"sow by {data['sow_by']}"
-        layout = TwoLineLayout(tape=tape)
-        name_font = fit_text_to_box(name, mm_to_dots(100), layout.primary_h, DEFAULT_BOLD)
-        sub_font = load_font(DEFAULT_FONT, layout.secondary_h - 2)
-        length = max(text_width(name, name_font), text_width(sub, sub_font)) + mm_to_dots(6)
-        canvas = LabelCanvas.create(tape, length_mm=length * 25.4 / 180)
-        draw_row(canvas, name, name_font, layout.primary_y)
-        draw_row(canvas, sub, sub_font, layout.secondary_y)
-        return canvas.image
+[[presets.fields]]
+name = "year"
+required = false
+example = "2025"
+
+[[presets.fields]]
+name = "icon"
+required = false
+example = "sprout"
 ```
+
+That's it — the preset loader picks it up at registry init, `lp list` shows it, `lp show garden/seed_packet` prints the schema, and `lp render garden/seed_packet ...` produces a label. Want a QR next to it? `--link vault:garden/tomatoes/brandywine`. An arbitrary bitmap? `--image path/to/photo.png`. Neither of those requires touching the preset.
+
+The preset format supports a primary line, a secondary line (optionally joined with a separator), conditional fragments (`if` / `if_all` / `if_any`), a derived date-offset field (leftovers compute their eat-by date this way), and an optional icon field. See [`docs/creating-a-preset.md`](docs/creating-a-preset.md) for the full schema.
+
+### Add a bespoke Python template
+
+When a label genuinely needs custom geometry — cable flags that wrap around a cable, polarity icons, GHS hazard pictograms — write it as a Python class that inherits `Template` and lives alongside the preset entries in the same pack. The pack's `__init__.py` includes it in `PACK.templates` next to the loaded presets. Five such templates ship today out of 36 total.
 
 ### Ship a whole pack as a separate pip package
 
