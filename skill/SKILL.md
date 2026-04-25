@@ -25,7 +25,7 @@ You generate labels for the Brother PT-P750W (primary) via the `lp` CLI. The sam
 1. **Understand the request.** What's being labeled, and which template fits?
 2. **Pick a template.** Run `lp list` if you're unsure; run `lp show <qualified>` to see its field schema. Never invent a template.
 3. **Dry-render a PNG preview.** Always. Save to `/tmp/label_preview.png` and show the user. Do NOT print without explicit confirmation.
-4. **Confirm, then print.** Once the user approves, run `lp print ...`. Once real transports land, this sends to the physical printer; until then it dry-runs to a `.bin` file and you tell the user that.
+4. **Confirm, then print.** Once the user approves, run `lp print ... --send` (or `lp batch ... --send` for multiple labels). The network transport is wired up: `--send` actually drives the physical printer over Wi-Fi. Without `--send`, `lp print` dry-runs to a `.bin` file and prints a hex preview.
 5. **Prefer 12mm** unless the user says otherwise or the label obviously needs width (e.g. large multi-field spool label).
 
 ## Template catalog
@@ -97,7 +97,7 @@ If the incoming message is a `<channel source="telegram" chat_id="..." ...>` tag
 3. Reply with the PNG attached: `reply(chat_id=<from the tag>, text="preview — ok to print?", files=["/tmp/label_preview.png"])`. Describe what you rendered in one line so they can sanity-check without opening the image.
 4. Wait for explicit "yes" / "print" / "send it" before adding `--send`. Never `--send` unprompted — it's the only thing that moves tape.
 5. For free-form requests ("label this: sriracha, opened yesterday"), infer the best template, name it in your reply ("using `kitchen/pantry_jar`, tape 12mm"), and let them redirect before rendering if the pick is wrong.
-6. On success with `--send`, send a new reply (not an edit) with "printed ✅" so their phone pings. If `--send` fails because no printer is paired yet, say so plainly — that's expected pre-hardware.
+6. On success with `--send`, send a new reply (not an edit) with "printed ✅" so their phone pings. If `--send` fails with "no printer host configured," tell them to run `lp printer set <ip>` once. If it fails because the printer is unreachable, suggest `lp scan` to verify connectivity.
 
 ## Failure modes
 
