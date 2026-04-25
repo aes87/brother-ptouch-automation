@@ -215,6 +215,8 @@ Claude picks the right template, proposes fields, dry-renders a PNG for you to r
 
 ![Batch print flow — spec.json holding [label1, label2, …] enters the lp batch command, validates that every label uses the same tape width, renders each to a Pillow Image, then encode_batch emits a session prologue once followed by per-page commands (print_information + mode + advanced + margin + compression + raster + 0x0C next-page) repeated for each label. The last page appends 0x1A (print & feed). The PT-P750W produces one continuous strip with half-cuts between labels.](./docs/images/lp-batch-flow.png)
 
+> The cut command sequence is more subtle than the Brother Raster Command Reference's example would suggest — auto-cut on the Mode byte forces full cuts between every page in a chain, and the canonical "half-cut between, full cut at end" pattern requires a specific byte layout we discovered empirically. See [Cutting and batches — what actually works](./docs/cutting-and-batches.md) if you're touching the encoder, adding a new transport, or wondering why the obvious-from-the-spec answer doesn't work.
+
 ## How a single label is encoded
 
 ![Render pipeline — Template.render produces a tape-sized Pillow Image, converted to monochrome (threshold 128), fit-checked against tape dimensions, then packed into 128-pin MSB-first raster bytes. Each 16-byte line branches: all-zero lines collapse to a single 0x5A Z-shortcut; non-zero lines get 0x47 + length + PackBits (TIFF-style compression). Both paths merge into the command stream, which is wrapped in the prologue (init · mode · info · margin) and terminated with 0x1A (print & feed). Amber accents on entry, branch, and final output; teal highlights the Z-shortcut shortcut path.](./docs/images/lp-render-pipeline.png)
