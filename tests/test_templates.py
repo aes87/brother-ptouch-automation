@@ -15,10 +15,6 @@ _FIXTURES: dict[str, dict[str, object]] = {
     "kitchen/leftover":        {"contents": "Chili", "cooked": "2026-04-19", "eat_within_days": 4},
     "kitchen/freezer":         {"contents": "Bolognese", "frozen": "2026-04-19", "portion": "2 serves"},
     "electronics/cable_flag":  {"source": "NAS", "dest": "SWITCH p3"},
-    "electronics/cable_flag_qr": {
-        "title": "NAS → SW p3", "date": "2026-04-19",
-        "details": "VLAN 20\npatch A-14", "link": "vault:networking/nas-eth0",
-    },
     "electronics/component_bin": {"value": "10kΩ", "footprint": "0805", "tolerance": "1%"},
     "electronics/psu_polarity": {"voltage": "12V", "current": "2A"},
     "three_d_printing/filament_spool": {
@@ -92,3 +88,32 @@ def test_missing_required_field_raises(registry):
     template = registry.get("kitchen/pantry_jar")
     with pytest.raises(ValueError):
         template.validate({})
+
+
+@pytest.mark.parametrize("tape", [TapeWidth.MM_12, TapeWidth.MM_24])
+def test_cable_flag_with_title_date_details_and_link(tape: TapeWidth, registry):
+    """The merged cable_flag accepts title + date + multi-line details + per-face QR."""
+    template = registry.get("electronics/cable_flag")
+    data = template.validate({
+        "title": "NAS → SW p3",
+        "date": "2026-04-19",
+        "details": "VLAN 20\npatch A-14",
+        "link": "vault:networking/nas-eth0",
+    })
+    image = template.render(data, tape)
+    assert image.height == geometry_for(tape).print_pins
+    assert image.width > 200  # two faces + wrap, well above the 20mm-min floor
+
+
+def test_cable_flag_requires_title_or_source_dest_pair(registry):
+    template = registry.get("electronics/cable_flag")
+    with pytest.raises(ValueError):
+        template.validate({"date": "2026-04-19"})  # neither title nor source+dest
+    with pytest.raises(ValueError):
+        template.validate({"source": "NAS"})  # source without dest
+
+
+def test_cable_flag_handles_extras_internally(registry):
+    """compose_extras must skip 'link' and 'image' for cable_flag — it draws them per-face."""
+    template = registry.get("electronics/cable_flag")
+    assert template.handles_extras == frozenset({"link", "image"})

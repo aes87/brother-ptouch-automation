@@ -77,7 +77,7 @@ lp render three_d_printing/tool_tag \
   --png-out /tmp/label_preview.png
 ```
 
-`--link` accepts short-forms (`vault:...`, `gh:...`), URLs, or any opaque string. `--image` takes a path to a PNG/JPEG; it is fitted to tape height and threshold-converted to monochrome. Both flags also work on `lp print`. Templates that render their own QR (`utility/qr`, `electronics/cable_flag_qr`) silently ignore `--link` to avoid a double QR.
+`--link` accepts short-forms (`vault:...`, `gh:...`), URLs, or any opaque string. `--image` takes a path to a PNG/JPEG; it is fitted to tape height and threshold-converted to monochrome. Both flags also work on `lp print`. Templates that render their own QR / image (`utility/qr`, `utility/image`, `electronics/cable_flag` — which puts them on **each** face inside the wrap geometry) silently absorb the matching flag instead of letting `compose_extras` tack a copy onto the trailing edge.
 
 ## Rules
 
@@ -104,4 +104,4 @@ If the incoming message is a `<channel source="telegram" chat_id="..." ...>` tag
 - `lp` not found → tell the user to activate their `label-printer` venv, or set `LP=/abs/path/to/lp`.
 - Template not found → run `lp list` and pick the closest match, or ask.
 - Missing required field → `lp show` the template, prompt the user for the missing piece, then retry.
-- USB/BT transport error → transports may still be stubs. Use `--transport dryrun` (the default) and report the `.bin` path.
+- Network transport error → confirm `lp printer show` is set; `lp scan` to test reachability. SNMP-based `lp status` requires SNMP enabled on the printer (default on the PT-P750W). USB / Bluetooth transports aren't wired up yet.

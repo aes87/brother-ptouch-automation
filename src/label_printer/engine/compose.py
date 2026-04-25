@@ -40,7 +40,7 @@ def strip_template_handled(extras: dict, template) -> dict:
     return {k: v for k, v in extras.items() if k not in handled}
 
 
-def _load_and_fit_image(path: str | Path, target_h: int, threshold: int = 128) -> Image.Image:
+def load_and_fit_image(path: str | Path, target_h: int, threshold: int = 128) -> Image.Image:
     """Load an image file and scale it to exactly ``target_h`` pixels tall, 1-bit.
 
     Preserves aspect ratio, handles RGBA by flattening against white,
@@ -83,7 +83,7 @@ def compose_extras(body: Image.Image, extras: dict, tape: TapeWidth) -> Image.Im
     if link:
         additions.append(render_qr(str(link), target_h))
     if image:
-        additions.append(_load_and_fit_image(image, target_h))
+        additions.append(load_and_fit_image(image, target_h))
 
     gap = mm_to_dots(1.5)
     extras_w = sum(img.width for img in additions) + gap * len(additions)
