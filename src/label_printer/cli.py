@@ -13,6 +13,60 @@ from label_printer.engine.compose import compose_extras, strip_template_handled
 from label_printer.tape import geometry_for
 from label_printer.templates import default_registry
 from label_printer.transport.dryrun import DryRunTransport
+from label_printer.transport.network import NetworkTransport
+
+
+def _resolve_host(host: str | None) -> str:
+    """Pick a printer host: explicit flag → LABEL_PRINTER_HOST env → saved state."""
+    import os
+    if host:
+        return host
+    env_host = os.environ.get("LABEL_PRINTER_HOST")
+    if env_host:
+        return env_host
+    saved = state_mod.load().printer_host
+    if saved:
+        return saved
+    raise click.ClickException(
+        "no printer host configured. Pass --host, set LABEL_PRINTER_HOST, "
+        "or run `lp printer set <ip>` to persist one."
+    )
+
+
+def _make_transport(transport_name: str, host: str | None):
+    """Build a hardware transport. USB/Bluetooth not implemented yet."""
+    if transport_name == "network":
+        return NetworkTransport(_resolve_host(host))
+    raise click.ClickException(
+        f"transport '{transport_name}' not available yet — only 'network' "
+        "(Wi-Fi / Ethernet) is wired up. USB and Bluetooth land later."
+    )
+
+
+def _verify_tape_or_die(transport, tape: TapeWidth) -> None:
+    """Query the printer and bail if the loaded tape doesn't match the job's.
+
+    For transports that can't query status (currently NetworkTransport — Brother
+    network firmware uses TCP:9100 as write-only), warn and proceed without
+    verification.
+    """
+    from label_printer.status import TapeMismatchError, ensure_tape_matches
+    from label_printer.transport.base import StatusUnavailable
+    try:
+        status = transport.query_status()
+    except StatusUnavailable as e:
+        click.secho(
+            f"warning: tape-width pre-check skipped ({e}). "
+            f"Confirm {int(tape)}mm tape is loaded before printing.",
+            fg="yellow",
+        )
+        return
+    except Exception as e:
+        raise click.ClickException(f"could not query printer status: {e}") from e
+    try:
+        ensure_tape_matches(status, tape)
+    except TapeMismatchError as e:
+        raise click.ClickException(str(e)) from e
 
 
 def _render_with_extras(template, data: dict, tape: TapeWidth,
@@ -150,15 +204,19 @@ def render_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...]
 )
 @click.option(
     "--transport", "transport_name",
-    type=click.Choice(["usb", "bluetooth"]),
-    default="usb", show_default=True,
+    type=click.Choice(["network", "usb", "bluetooth"]),
+    default="network", show_default=True,
     help="Hardware transport to use when --send is set.",
 )
+@click.option("--host", "printer_host", type=str, default=None,
+              help="Printer host/IP (for --transport network). Falls back to "
+                   "LABEL_PRINTER_HOST env var, then saved state.")
 @click.option("--bin-out", type=click.Path(path_type=Path), default=Path("out.bin"),
               help="Dry-run output path (ignored when --send is set).")
 def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
                    link: str | None, image_path: str | None,
-                   send: bool, transport_name: str, bin_out: Path) -> None:
+                   send: bool, transport_name: str, printer_host: str | None,
+                   bin_out: Path) -> None:
     """Encode + (dry-run|send) a template-based label.
 
     By default this is a dry-run: the label is rendered and encoded, the
@@ -186,9 +244,12 @@ def print_template(qualified: str, tape_mm: int | None, fields: tuple[str, ...],
         )
         return
 
-    raise click.ClickException(
-        f"transport '{transport_name}' not available yet — arrives in Phase 5. "
-        "Until then, omit --send for a dry-run."
+    transport = _make_transport(transport_name, printer_host)
+    _verify_tape_or_die(transport, tape)
+    transport.send(cmd_bytes)
+    click.secho(
+        f"sent {len(cmd_bytes)} bytes to {transport.name} ({getattr(transport, 'host', '?')}).",
+        fg="green",
     )
 
 
@@ -242,27 +303,77 @@ def tape_info() -> None:
 
 
 @main.command()
-def scan() -> None:
-    """List connected printers (Phase 5 stub)."""
-    click.echo("Hardware transports not wired up yet. USB/BT transports land with Phase 5.")
+@click.option("--host", "printer_host", type=str, default=None,
+              help="Override the saved printer host for this probe.")
+def scan(printer_host: str | None) -> None:
+    """Probe the configured printer host and report whether it's reachable on TCP:9100."""
+    try:
+        host = _resolve_host(printer_host)
+    except click.ClickException as e:
+        click.echo(str(e.message))
+        return
+    transport = NetworkTransport(host)
+    try:
+        transport.probe()
+    except OSError as e:
+        click.secho(f"unreachable: {host}:{transport.port} — {e}", fg="red")
+        raise click.exceptions.Exit(1) from None
+    click.secho(f"reachable: {host}:{transport.port}", fg="green")
 
 
 @main.command()
 @click.option(
     "--transport", "transport_name",
-    type=click.Choice(["usb", "bluetooth"]),
-    default="usb", show_default=True,
+    type=click.Choice(["network", "usb", "bluetooth"]),
+    default="network", show_default=True,
 )
-def status(transport_name: str) -> None:
+@click.option("--host", "printer_host", type=str, default=None,
+              help="Printer host/IP (for --transport network).")
+def status(transport_name: str, printer_host: str | None) -> None:
     """Query the printer and report loaded tape + any error flags.
 
-    Requires a hardware transport. Returns non-zero on any error condition
-    (wrong media, cover open, overheating, etc.) so scripts can gate on it.
+    Returns non-zero on any error condition (wrong media, cover open,
+    overheating, etc.) so scripts can gate on it.
     """
-    raise click.ClickException(
-        f"{transport_name} transport not wired up yet — arrives in Phase 5. "
-        "`lp status` will query the printer live once hardware lands."
-    )
+    transport = _make_transport(transport_name, printer_host)
+    try:
+        snap = transport.query_status()
+    except Exception as e:
+        raise click.ClickException(f"could not query status: {e}") from e
+    loaded = snap.tape_width()
+    width_str = f"{int(loaded)}mm" if loaded else f"{snap.media_width_mm}mm (unknown)"
+    click.echo(f"tape:  {width_str}")
+    click.echo(f"media: {'loaded' if snap.has_media else 'absent'}")
+    errors = snap.describe_errors()
+    if errors:
+        click.secho(f"errors: {', '.join(errors)}", fg="red")
+        raise click.exceptions.Exit(1)
+    click.secho("ok", fg="green")
+
+
+@main.group()
+def printer() -> None:
+    """Configure printer connection (host/IP)."""
+
+
+@printer.command("set")
+@click.argument("host")
+def printer_set(host: str) -> None:
+    """Persist the printer host/IP for future commands."""
+    state = state_mod.load()
+    state.printer_host = host
+    path = state_mod.save(state)
+    click.echo(f"printer_host = {host}  (saved to {path})")
+
+
+@printer.command("show")
+def printer_show() -> None:
+    """Show the configured printer host."""
+    state = state_mod.load()
+    if state.printer_host:
+        click.echo(state.printer_host)
+    else:
+        click.echo("(unset — pass --host or run `lp printer set <ip>`)")
 
 
 @main.command()
@@ -308,9 +419,17 @@ def wires() -> None:
     "--no-half-cut", is_flag=True,
     help="Disable half-cut between labels (full cut between each). P750W only.",
 )
+@click.option(
+    "--transport", "transport_name",
+    type=click.Choice(["network", "usb", "bluetooth"]),
+    default="network", show_default=True,
+)
+@click.option("--host", "printer_host", type=str, default=None,
+              help="Printer host/IP (for --transport network).")
 @click.option("--bin-out", type=click.Path(path_type=Path), default=Path("batch.bin"),
               show_default=True, help="Dry-run output path.")
-def batch_cmd(spec_file: Path, send: bool, no_half_cut: bool, bin_out: Path) -> None:
+def batch_cmd(spec_file: Path, send: bool, no_half_cut: bool,
+              transport_name: str, printer_host: str | None, bin_out: Path) -> None:
     """Print multiple labels as a single chained job.
 
     SPEC_FILE is a JSON array — each element specifies one label:
@@ -363,8 +482,13 @@ def batch_cmd(spec_file: Path, send: bool, no_half_cut: bool, bin_out: Path) -> 
             fg="yellow",
         )
         return
-    raise click.ClickException(
-        "hardware transport not available yet (arrives in Phase 5)."
+
+    transport = _make_transport(transport_name, printer_host)
+    _verify_tape_or_die(transport, tape)
+    transport.send(cmd_bytes)
+    click.secho(
+        f"sent {len(cmd_bytes)} bytes to {transport.name} ({getattr(transport, 'host', '?')}).",
+        fg="green",
     )
 
 

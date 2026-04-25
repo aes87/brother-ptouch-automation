@@ -120,10 +120,17 @@ def test_cli_batch_rejects_mixed_tape(tmp_path: Path):
     assert "tape width" in result.output.lower()
 
 
-def test_cli_batch_send_rejected_until_phase5(tmp_path: Path):
+def test_cli_batch_send_requires_configured_host(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("LABEL_PRINTER_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LABEL_PRINTER_HOST", raising=False)
+    import importlib
+
+    from label_printer import state as state_mod
+    importlib.reload(state_mod)
+
     spec = [{"template": "kitchen/spice", "tape_mm": 12, "fields": {"name": "x"}}]
     spec_path = tmp_path / "batch.json"
     spec_path.write_text(json.dumps(spec))
     result = CliRunner().invoke(main, ["batch", str(spec_path), "--send"])
     assert result.exit_code != 0
-    assert "Phase 5" in result.output
+    assert "no printer host configured" in result.output

@@ -71,10 +71,14 @@ class PrinterStatus:
     status_type: int
     tape_color: int
     text_color: int
+    # Pre-decoded alert names from out-of-band sources (currently SNMP's
+    # hrPrinterDetectedErrorState). Empty for the in-band ESC i S path; the
+    # bit fields above are decoded inside describe_errors() instead.
+    alerts: tuple[str, ...] = ()
 
     @property
     def has_error(self) -> bool:
-        return bool(self.error_info_1) or bool(self.error_info_2)
+        return bool(self.error_info_1) or bool(self.error_info_2) or bool(self.alerts)
 
     @property
     def has_media(self) -> bool:
@@ -88,6 +92,11 @@ class PrinterStatus:
             return None
 
     def describe_errors(self) -> list[str]:
+        # Pre-decoded alerts (SNMP path) take precedence — they're the most
+        # specific source. The bit-field fallback is for the ESC i S path,
+        # which never sets `alerts`.
+        if self.alerts:
+            return list(self.alerts)
         parts: list[str] = []
         if self.error_info_1:
             if self.error_info_1 & ErrorInformation1.NO_MEDIA:

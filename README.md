@@ -152,9 +152,10 @@ lp print <template> -f k=v ... --send  # really print
 lp batch <spec.json>                   # chained multi-label job (half-cut)
 lp batch <spec.json> --send            # ditto, send for real
 
-# hardware (Phase 5)
-lp status                              # loaded tape + error flags
-lp scan                                # discover attached printers
+# hardware (Wi-Fi)
+lp printer set <ip>                    # persist printer host/IP
+lp status                              # loaded tape + error flags (via SNMP)
+lp scan                                # probe whether the printer accepts connections
 
 # config
 lp tape <mm>                           # persist current tape width
@@ -232,7 +233,7 @@ lp render three_d_printing/tool_tag -f tool="Calipers" \
   --image ~/assets/logo.png --png-out preview.png
 ```
 
-Templates that render their own QR (`utility/qr`, `electronics/cable_flag_qr`) declare `handles_extras = {"link"}` and silently drop the external `--link` so you don't get a duplicate.
+Templates that render their own QR / image (`utility/qr`, `utility/image`, `electronics/cable_flag` — which puts both on **each** face inside the wrap geometry) declare `handles_extras = {…}` and silently absorb the matching flag instead of letting `compose_extras` tack a copy onto the trailing edge.
 
 ## Extending it
 
@@ -313,8 +314,9 @@ The encoder targets Brother's [Raster Command Reference for PT-E550W / PT-P750W 
 - [x] **Half-cut + multi-label batch** — chained print jobs with partial cuts between labels (PT-P750W)
 - [x] **Icon engine** — curated Lucide bundle + optional full-set installers, opt-in per template
 - [x] **Status parsing** — 32-byte packet decoded, `ensure_tape_matches()` gate for real sends
-- [ ] **Phase 4** — chat-bridge integration (Telegram / Slack) in dry-run
-- [ ] **Phase 5** — USB + Bluetooth transports, first physical prints, live tape-match gating
+- [x] **Phase 4** — chat-bridge integration (Telegram) in dry-run
+- [x] **Phase 5 (Wi-Fi)** — `NetworkTransport` over TCP:9100 + SNMP-based `lp status`; first physical prints landed
+- [ ] **Phase 5 (USB / Bluetooth)** — direct-attach transports for offline use
 - [ ] **Phase 6** — `lp print --remote <host>` for running the service on a dedicated machine
 
 ### Open proposals

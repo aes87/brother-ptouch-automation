@@ -19,6 +19,7 @@ _STATE_FILE = _CONFIG_DIR / "state.toml"
 @dataclass
 class State:
     tape_mm: int = 12
+    printer_host: str | None = None
 
     def tape(self) -> TapeWidth:
         return TapeWidth(self.tape_mm if self.tape_mm != 3 else 4)
@@ -34,6 +35,7 @@ def load() -> State:
 
 def save(state: State) -> Path:
     _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    lines = [f"{k} = {v!r}" for k, v in asdict(state).items()]
+    # TOML has no null — omit None fields so the file stays parseable.
+    lines = [f"{k} = {v!r}" for k, v in asdict(state).items() if v is not None]
     _STATE_FILE.write_text("\n".join(lines) + "\n")
     return _STATE_FILE

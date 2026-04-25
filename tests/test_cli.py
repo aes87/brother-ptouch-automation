@@ -67,12 +67,30 @@ def test_print_defaults_to_dry_run(tmp_path: Path):
     assert (tmp_path / "dry.bin").exists()
 
 
-def test_print_send_rejected_until_phase5():
+def test_print_send_requires_a_configured_host(tmp_path: Path, monkeypatch):
+    """Without a host (no flag, no env, no state), --send fails with a clear message."""
+    monkeypatch.setenv("LABEL_PRINTER_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LABEL_PRINTER_HOST", raising=False)
+    import importlib
+
+    from label_printer import state as state_mod
+    importlib.reload(state_mod)
+
     result = CliRunner().invoke(main, [
         "print", "kitchen/spice", "-f", "name=x", "--send",
     ])
     assert result.exit_code != 0
-    assert "Phase 5" in result.output
+    assert "no printer host configured" in result.output
+
+
+def test_print_send_rejects_unimplemented_transports(tmp_path: Path, monkeypatch):
+    """USB / Bluetooth still raise the 'not available yet' error."""
+    monkeypatch.setenv("LABEL_PRINTER_CONFIG_DIR", str(tmp_path))
+    result = CliRunner().invoke(main, [
+        "print", "kitchen/spice", "-f", "name=x", "--send", "--transport", "usb",
+    ])
+    assert result.exit_code != 0
+    assert "not available yet" in result.output
 
 
 def test_tape_persistence(tmp_path: Path, monkeypatch):
