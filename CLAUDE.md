@@ -67,14 +67,14 @@ label-printer/
 │   └── sdk-comparison.md
 ├── docs/sessions/              # Session logs (per workspace convention)
 └── tests/
-    └── golden/                 # Byte-exact raster snapshots per template
+    └── golden/                 # Byte-exact raster-encoder snapshots
 ```
 
 ## When Working Here
 1. Read this file + the implementation plan at `obsidian-vault/vault/projects/label-printer/implementation-plan.md`.
 2. Confirm current phase before starting a task (the plan is the source of truth, not memory).
 3. For any code that touches the printer: render to a PNG first and eyeball it before sending bytes. 180 DPI matters.
-4. When adding a template, add a golden test under `tests/golden/` so future renderer changes can't silently shift pixels.
+4. When adding a template, cover it in `tests/test_templates.py` so it renders + encodes at 12mm and 24mm. Per-template visual goldens are not required — templates may shift visually as the renderer evolves. `tests/golden/` pins the raster encoder, not per-template layout.
 5. When this project becomes a skill, verify Telegram-channel can call it end-to-end before closing the phase.
 
 ## Future integrations
