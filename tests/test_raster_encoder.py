@@ -31,6 +31,14 @@ def test_prologue_is_deterministic():
     assert prologue[113] == 0x84
     assert prologue[115] == 12
     assert int.from_bytes(prologue[117:121], "little") == 100
+    # ESC i A 01 (cut-every-N=1) sits between ESC i M and ESC i K. Verify it's
+    # present, has the expected argument, and is positioned mid-bracket.
+    mode_at = prologue.find(b"\x1b\x69\x4d")
+    autocut_at = prologue.find(b"\x1b\x69\x41")
+    advanced_at = prologue.find(b"\x1b\x69\x4b")
+    assert autocut_at >= 0, "ESC i A missing from single-label prologue"
+    assert prologue[autocut_at + 3] == 0x01, "ESC i A arg should be 1 for single-label"
+    assert mode_at < autocut_at < advanced_at
 
 
 def test_raster_lines_use_zero_shortcut_for_blank_rows():
@@ -189,13 +197,22 @@ def _brother_pt_expected_bytes(raster: bytes, tape: TapeWidth, feed_dots: int) -
     return out
 
 
+def _strip_autocut_command(data: bytes) -> bytes:
+    """Drop our ESC i A nn (4 bytes) so output can be compared against
+    encoders that don't emit it — namely brother_pt's reference."""
+    idx = data.find(b"\x1B\x69\x41")
+    return data if idx < 0 else data[:idx] + data[idx + 4 :]
+
+
 @pytest.mark.parametrize("tape", [TapeWidth.MM_12, TapeWidth.MM_24])
 def test_matches_brother_pt_byte_for_byte(tape: TapeWidth):
     """Fixed raster bytes → identical command stream.
 
     brother_pt's reference encoder emits advanced-mode=0x08 (chaining off, no
-    half-cut). We set half_cut=False here to match that baseline; half-cut is
-    tested separately above.
+    half-cut) and does NOT send ESC i A — its prologue assumes the printer's
+    default cut-every-N. We send ESC i A explicitly so cut-every behavior is
+    self-contained, so we strip it before comparing. The rest of the stream
+    must still match byte-for-byte.
     """
     raster = bytes(
         # 4 lines, varied content to exercise Z-shortcut + packbits branches
@@ -206,10 +223,10 @@ def test_matches_brother_pt_byte_for_byte(tape: TapeWidth):
     )
     ours = encode_job_from_raster(raster, tape, RasterOptions(feed_dots=0, half_cut=False))
     theirs = _brother_pt_expected_bytes(raster, tape, feed_dots=0)
-    assert ours == theirs, (
+    assert _strip_autocut_command(ours) == theirs, (
         f"byte mismatch (len ours={len(ours)}, theirs={len(theirs)})\n"
         f"first diff at byte "
-        f"{next((i for i,(a,b) in enumerate(zip(ours, theirs, strict=False)) if a!=b), 'end')}"
+        f"{next((i for i,(a,b) in enumerate(zip(_strip_autocut_command(ours), theirs, strict=False)) if a!=b), 'end')}"
     )
 
 

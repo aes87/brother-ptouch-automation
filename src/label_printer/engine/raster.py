@@ -8,13 +8,14 @@ dry-run) with no further processing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import packbits
 from PIL import Image
 
 from label_printer.constants import (
     CMD_ADVANCED_MODE_PREFIX,
+    CMD_AUTOCUT_EVERY_PREFIX,
     CMD_COMPRESSION_TIFF,
     CMD_DYNAMIC_MODE_RASTER,
     CMD_ENABLE_STATUS_NOTIFICATION,
@@ -70,11 +71,20 @@ class RasterOptions:
         return flags
 
 
-def _print_information(raster_data_len: int, tape: TapeWidth) -> bytes:
+def _print_information(
+    raster_data_len: int,
+    tape: TapeWidth,
+    *,
+    starting_page: int = 0,
+) -> bytes:
     """Build the ESC i z print-information command.
 
     Per Brother's reference: the `n4..n7` field is `raster_data_len >> 4`
     (i.e. the number of raster lines, given each line is 16 bytes).
+
+    ``starting_page`` is the n9 byte: 0 = starting page (or only page),
+    1 = middle page in a chain, 2 = last page in a chain. The PT-P750W
+    relies on this byte to chain-print correctly with half-cuts.
     """
     lines = raster_data_len // LINE_LENGTH_BYTES
     return (
@@ -83,7 +93,8 @@ def _print_information(raster_data_len: int, tape: TapeWidth) -> bytes:
         + int(tape).to_bytes(1, "little")
         + b"\x00"
         + lines.to_bytes(4, "little")
-        + b"\x00\x00"
+        + starting_page.to_bytes(1, "little")
+        + b"\x00"
     )
 
 
@@ -103,7 +114,20 @@ def _encode_raster_lines(raster: bytes) -> bytes:
 
 
 def build_prologue(raster_data_len: int, tape: TapeWidth, options: RasterOptions) -> bytes:
-    """Everything that comes before the raster data in a print job."""
+    """The single-label prologue. Used by :func:`encode_job` only.
+
+    :func:`encode_batch` constructs its own job-level header inline because
+    its structure is fundamentally different: control codes are emitted
+    once at the start (not per page), auto-cut is forced off, and an extra
+    ESC i K kick is sent before the last page. If you're adding a new
+    job-level command, update both this function and ``encode_batch``.
+
+    The ``ESC i A 01`` here declares "cut after every 1 label" — the
+    standard single-label behavior. With auto-cut on (the single-label
+    default), this is what the printer would assume anyway, but stating
+    it explicitly makes the job self-contained against printer-side
+    persistent overrides.
+    """
     return (
         INVALIDATE_BYTES
         + CMD_INITIALIZE
@@ -111,6 +135,7 @@ def build_prologue(raster_data_len: int, tape: TapeWidth, options: RasterOptions
         + CMD_ENABLE_STATUS_NOTIFICATION
         + _print_information(raster_data_len, tape)
         + CMD_MODE_PREFIX + options.mode_flags().to_bytes(1, "little")
+        + CMD_AUTOCUT_EVERY_PREFIX + b"\x01"
         + CMD_ADVANCED_MODE_PREFIX + options.advanced_flags().to_bytes(1, "little")
         + CMD_MARGIN_PREFIX + options.feed_dots.to_bytes(2, "little")
         + CMD_COMPRESSION_TIFF
@@ -155,37 +180,72 @@ def encode_batch(
 ) -> bytes:
     """Encode multiple labels into one chained print job.
 
-    With the default ``options`` (``half_cut=True``, ``auto_cut=True``), the
-    printer produces a partial cut between each label — they come off the
-    printer as a single strip attached by the liner, which is easier to
-    handle than N separate strips. The final label gets a full feed-and-cut.
+    The output is one strip held together by the liner with half-cuts
+    between labels and a full feed-and-cut at the end.
 
-    Pages are framed with per-page ``print_information`` + control codes,
-    separated by ``0x0C`` (next page) and terminated by ``0x1A`` (print and
-    feed). The session-level ``invalidate`` + ``ESC @`` + dynamic-mode +
-    status-notification commands are emitted once at the start.
+    The structure follows the documented working pattern from three
+    independent reference implementations (philpem/printer-driver-ptouch,
+    boxine/rasterprynt, masatomizuta/py-brotherlabel):
+
+    * Job-level control codes (``ESC i M / K / d``) are emitted **once**
+      at the start, not per page. Auto-cut is forced **off** at the
+      job level — when on, the printer full-cuts after every page
+      regardless of the half-cut bit.
+    * Per page: optional ``0x0C`` separator (between pages), per-page
+      ``ESC i z`` with the ``n9`` byte indicating page position (0 =
+      starting/only, 1 = middle, 2 = last), compression, raster data.
+    * The terminating ``0x1A`` triggers the final feed-and-cut.
+
+    Half-cuts between labels are produced by the half-cut bit in
+    ``ESC i K`` (set once at job start), driven by the printer's page
+    boundaries; the auto-cut bit must be off so the cutter doesn't fire
+    on every page.
+
+    Single-label batches degrade to a normal single-job encoding via
+    :func:`encode_job` so byte-for-byte tests against single-job output
+    keep working.
     """
     if not images:
         raise ValueError("encode_batch requires at least one image")
     options = options or RasterOptions()
 
+    if len(images) == 1:
+        return encode_job(images[0], tape, options)
+
+    # Force auto-cut OFF on the job-level Mode byte: with auto-cut on, the
+    # printer cuts after every page regardless of the half-cut / chain bits.
+    # Force chaining ON (no-chain bit clear) so the printer doesn't terminate
+    # mid-batch — the trailing 0x1A is what drives the final feed-and-cut.
+    job_options = replace(options, auto_cut=False, chaining=True)
+    # Last-page variant of ESC i K: chaining=False flips the no-chain bit on
+    # so the terminating 0x1A produces a real feed-and-cut. With auto-cut off
+    # at the job level, 0x1A alone only feeds — per spec, the no-chain bit
+    # is what fires the end-of-job cut.
+    kick_options = replace(job_options, chaining=False)
+
     out = bytearray()
+    # Job-level prologue, sent ONCE.
     out += INVALIDATE_BYTES
     out += CMD_INITIALIZE
     out += CMD_DYNAMIC_MODE_RASTER
     out += CMD_ENABLE_STATUS_NOTIFICATION
+    out += CMD_MODE_PREFIX + job_options.mode_flags().to_bytes(1, "little")
+    out += CMD_ADVANCED_MODE_PREFIX + job_options.advanced_flags().to_bytes(1, "little")
+    out += CMD_MARGIN_PREFIX + job_options.feed_dots.to_bytes(2, "little")
 
     last = len(images) - 1
     for i, image in enumerate(images):
+        if i > 0:
+            out += CMD_PRINT_NEXT_PAGE  # 0x0C between pages
+        if i == last:
+            # Re-emit ESC i K with the last-page variant before the final page.
+            out += CMD_ADVANCED_MODE_PREFIX + kick_options.advanced_flags().to_bytes(1, "little")
         raster = image_to_raster_bytes(image, tape)
-        # Per-page declaration: the raster-line count in print_information
-        # is specific to this page.
-        out += _print_information(len(raster), tape)
-        out += CMD_MODE_PREFIX + options.mode_flags().to_bytes(1, "little")
-        out += CMD_ADVANCED_MODE_PREFIX + options.advanced_flags().to_bytes(1, "little")
-        out += CMD_MARGIN_PREFIX + options.feed_dots.to_bytes(2, "little")
+        # n9 = 0 for the first/only page, 1 for middle pages, 2 for the last.
+        n9 = 2 if i == last else (0 if i == 0 else 1)
+        out += _print_information(len(raster), tape, starting_page=n9)
         out += CMD_COMPRESSION_TIFF
         out += _encode_raster_lines(raster)
-        out += CMD_PRINT_AND_FEED if i == last else CMD_PRINT_NEXT_PAGE
 
+    out += CMD_PRINT_AND_FEED  # 0x1A — final feed and cut
     return bytes(out)

@@ -90,6 +90,13 @@ CMD_PRINT_INFORMATION_PREFIX = b"\x1B\x69\x7A"
 CMD_MODE_PREFIX = b"\x1B\x69\x4D"
 CMD_ADVANCED_MODE_PREFIX = b"\x1B\x69\x4B"
 CMD_MARGIN_PREFIX = b"\x1B\x69\x64"
+# ESC i A — "Specify the page number in 'cut each * labels'." One-byte arg
+# is N: when auto-cut is on, the printer cuts after every N labels. The
+# PT-P750W's default appears to be N=1, which makes a chained batch full-cut
+# between every label regardless of the half-cut bit. We always send this
+# explicitly so a batch declares "cut once after all N labels" and single-
+# label jobs declare N=1.
+CMD_AUTOCUT_EVERY_PREFIX = b"\x1B\x69\x41"
 CMD_COMPRESSION_TIFF = b"\x4D\x02"
 CMD_RASTER_LINE = b"\x47"
 CMD_RASTER_ZERO_LINE = b"\x5A"
