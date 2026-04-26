@@ -72,6 +72,10 @@ def to_monochrome(image: Image.Image) -> Image.Image:
         mode = "L"
 
     if mode == "L":
+        # ``point`` with mode='1' is a hard threshold — explicitly *not*
+        # ``image.convert('1')``, which defaults to Floyd-Steinberg dithering
+        # that scatters grey ink dots through text and ruins legibility on
+        # small tape. Keep this as point()-with-threshold for text safety.
         return image.point(lambda x: 0 if x < _MONO_THRESHOLD else 255, mode="1")
 
     if mode == "1":

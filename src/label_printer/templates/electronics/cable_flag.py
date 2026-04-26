@@ -34,15 +34,16 @@ from typing import Any
 from PIL import Image
 
 from label_printer.engine.compose import load_and_fit_image
+from label_printer.engine.fonts import pick_font
 from label_printer.engine.layout import (
     DEFAULT_BOLD,
-    DEFAULT_FONT,
     LabelCanvas,
     TwoLineLayout,
+    cap_top_offset,
+    descender_max,
     draw_dashed_vline,
     draw_text,
     fit_text_to_box,
-    load_font,
     mm_to_dots,
     split_lines_to_fit,
     text_width,
@@ -68,9 +69,7 @@ def _resolve_title(data: dict) -> str:
     dst = data.get("dest")
     if src and dst:
         return f"{src} → {dst}"
-    raise ValueError(
-        "cable_flag needs either 'title' or both 'source' and 'dest'"
-    )
+    raise ValueError("cable_flag needs either 'title' or both 'source' and 'dest'")
 
 
 def _detail_lines(data: dict) -> list[str]:
@@ -169,8 +168,7 @@ class CableFlagTemplate(Template):
         has_pair = bool(resolved.get("source")) and bool(resolved.get("dest"))
         if not (has_title or has_pair):
             raise ValueError(
-                f"Template {self.meta.qualified} needs either 'title' "
-                "or both 'source' and 'dest'"
+                f"Template {self.meta.qualified} needs either 'title' or both 'source' and 'dest'"
             )
         return resolved
 
@@ -226,7 +224,7 @@ class CableFlagTemplate(Template):
         title_font = fit_text_to_box(title, text_area_target, title_h, DEFAULT_BOLD)
         title_w = text_width(title, title_font)
 
-        small_font = load_font(DEFAULT_FONT, max(7, small_line_h - 2)) if lines else None
+        small_font = pick_font(max(7, small_line_h)) if lines else None
 
         wrapped_small: list[str] = []
         if small_font:
@@ -242,7 +240,7 @@ class CableFlagTemplate(Template):
                 small_line_h = max(min_per_line, small_block_h // n)
                 if small_line_h * n > avail - min_title_h - layout.gap:
                     small_line_h = max(6, (avail - min_title_h - layout.gap) // n)
-                small_font = load_font(DEFAULT_FONT, max(6, small_line_h - 2))
+                small_font = pick_font(max(6, small_line_h))
                 title_h = max(min_title_h, avail - small_line_h * n - layout.gap)
                 title_font = fit_text_to_box(title, text_area_target, title_h, DEFAULT_BOLD)
                 title_w = text_width(title, title_font)
@@ -257,9 +255,7 @@ class CableFlagTemplate(Template):
 
         # Face length: side padding + image + text + qr.
         face_text_pad = mm_to_dots(2)
-        face_dots = (
-            face_text_pad + img_w + img_gap + text_w + qr_gap + qr_w + mm_to_dots(2)
-        )
+        face_dots = face_text_pad + img_w + img_gap + text_w + qr_gap + qr_w + mm_to_dots(2)
         face_dots = max(face_dots, mm_to_dots(20))
 
         od = diameter_mm(wire_spec)
@@ -277,10 +273,17 @@ class CableFlagTemplate(Template):
 
             text_x = face_x + face_text_pad + img_w + img_gap
 
-            draw_text(canvas, title, title_font, text_x, title_y, anchor="lt")
+            # Title baseline-anchored to row bottom (minus descender room) so
+            # caps fill the row without reserved descent space below them.
+            title_baseline = title_y + title_h - descender_max(title_font)
+            draw_text(canvas, title, title_font, text_x, title_baseline, anchor="ls")
 
             if small_font and wrapped_small:
-                cursor_y = small_block_y
+                # First small line cap-top sits flush with small_block_y; each
+                # subsequent line advances by small_line_h with the same
+                # cap-top offset cancelled out.
+                cap_off = cap_top_offset(small_font)
+                cursor_y = small_block_y - cap_off
                 for line in wrapped_small:
                     draw_text(canvas, line, small_font, text_x, cursor_y, anchor="lt")
                     cursor_y += small_line_h
