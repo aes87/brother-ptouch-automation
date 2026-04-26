@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from PIL import Image
 
+from label_printer.engine.fonts import BITMAP_THRESHOLD_PX, pick_font
 from label_printer.engine.layout import (
     DEFAULT_BOLD,
     LabelCanvas,
     draw_text,
     fit_text_to_box,
-    font_line_height,
     mm_to_dots,
     text_width,
 )
@@ -26,8 +26,12 @@ class QrTemplate(Template):
         summary="QR code on the left, optional caption on the right.",
         fields=[
             TemplateField("data", "URL or text to encode.", example="https://example.com"),
-            TemplateField("caption", "Optional caption text alongside the code.",
-                          required=False, example="Wi-Fi guest"),
+            TemplateField(
+                "caption",
+                "Optional caption text alongside the code.",
+                required=False,
+                example="Wi-Fi guest",
+            ),
         ],
         default_tape=TapeWidth.MM_12,
     )
@@ -43,7 +47,11 @@ class QrTemplate(Template):
         caption_gap = mm_to_dots(2) if caption else 0
         if caption:
             avail_h = geom.print_pins - 4
-            font = fit_text_to_box(str(caption), mm_to_dots(80), avail_h, DEFAULT_BOLD)
+            sized = fit_text_to_box(str(caption), mm_to_dots(80), avail_h, DEFAULT_BOLD)
+            cap_h = sized.getbbox("A")[3] - sized.getbbox("A")[1]
+            # Captions next to QR codes are usually small at 12mm — swap to
+            # Spleen if we're under the bitmap threshold.
+            font = pick_font(cap_h, bold=True) if cap_h <= BITMAP_THRESHOLD_PX else sized
             caption_w = text_width(str(caption), font)
         else:
             caption_w = 0
@@ -54,6 +62,9 @@ class QrTemplate(Template):
 
         if caption:
             text_x = qr_size + caption_gap
-            text_y = (geom.print_pins - font_line_height(font)) // 2
-            draw_text(canvas, str(caption), font, text_x, text_y, anchor="lt")
+            # Center the cap height vertically, then baseline-anchor.
+            actual_cap_h = font.getbbox("A")[3] - font.getbbox("A")[1]
+            text_top = max(0, (geom.print_pins - actual_cap_h) // 2)
+            baseline_y = text_top + actual_cap_h
+            draw_text(canvas, str(caption), font, text_x, baseline_y, anchor="ls")
         return canvas.image

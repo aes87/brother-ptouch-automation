@@ -6,12 +6,12 @@ from pathlib import Path
 
 from PIL import Image
 
+from label_printer.engine.fonts import BITMAP_THRESHOLD_PX, pick_font
 from label_printer.engine.layout import (
     DEFAULT_BOLD,
     LabelCanvas,
     draw_text,
     fit_text_to_box,
-    font_line_height,
     mm_to_dots,
     text_width,
 )
@@ -26,12 +26,19 @@ class ImageLabelTemplate(Template):
         name="image",
         summary="Bitmap scaled to tape height, optionally with a caption on the right.",
         fields=[
-            TemplateField("path", "Path to the image file (PNG/JPEG/etc.).",
-                          example="logo.png"),
-            TemplateField("caption", "Optional caption text to print next to the image.",
-                          required=False, example="aes87"),
-            TemplateField("threshold", "Monochrome threshold 0-255 (default 128).",
-                          required=False, default=128),
+            TemplateField("path", "Path to the image file (PNG/JPEG/etc.).", example="logo.png"),
+            TemplateField(
+                "caption",
+                "Optional caption text to print next to the image.",
+                required=False,
+                example="aes87",
+            ),
+            TemplateField(
+                "threshold",
+                "Monochrome threshold 0-255 (default 128).",
+                required=False,
+                default=128,
+            ),
         ],
         default_tape=TapeWidth.MM_12,
     )
@@ -59,7 +66,11 @@ class ImageLabelTemplate(Template):
         gap = mm_to_dots(2) if caption else 0
         if caption:
             avail_h = geom.print_pins - 4
-            font = fit_text_to_box(str(caption), mm_to_dots(100), avail_h, DEFAULT_BOLD)
+            sized = fit_text_to_box(str(caption), mm_to_dots(100), avail_h, DEFAULT_BOLD)
+            cap_h = sized.getbbox("A")[3] - sized.getbbox("A")[1]
+            # Captions next to bitmaps are typically small at 12mm — swap to
+            # Spleen below the bitmap-threshold so stems threshold cleanly.
+            font = pick_font(cap_h, bold=True) if cap_h <= BITMAP_THRESHOLD_PX else sized
             caption_w = text_width(str(caption), font)
         else:
             caption_w = 0
@@ -69,6 +80,8 @@ class ImageLabelTemplate(Template):
         canvas.image.paste(mono, (0, 0))
         if caption:
             text_x = img_w + gap
-            text_y = (geom.print_pins - font_line_height(font)) // 2
-            draw_text(canvas, str(caption), font, text_x, text_y, anchor="lt")
+            actual_cap_h = font.getbbox("A")[3] - font.getbbox("A")[1]
+            text_top = max(0, (geom.print_pins - actual_cap_h) // 2)
+            baseline_y = text_top + actual_cap_h
+            draw_text(canvas, str(caption), font, text_x, baseline_y, anchor="ls")
         return canvas.image
