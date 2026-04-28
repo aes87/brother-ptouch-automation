@@ -45,7 +45,7 @@ _FIXTURES: dict[str, dict[str, object]] = {
     "pet/collar_backup": {"name": "Rex", "contact": "+1 555 0100"},
     "pet/med_schedule": {"pet": "Rex", "med": "Apoquel 16mg", "cadence": "1x daily"},
     "pet/food_bowl": {"pet": "Rex", "food": "Acana Adult", "portion": "1 cup"},
-    "travel/luggage_tag": {"name": "aes87", "contact": "aesthe@example.com"},
+    "travel/luggage_tag": {"name": "harteWired", "contact": "aesthe@example.com"},
     "travel/gear_bag": {"bag": "Peak Design 30L", "purpose": "Banff 2026"},
     "travel/power_bank": {"capacity_mah": "20000", "charged": "2026-04-15", "model": "Anker 737"},
     "calibration/instrument_cal": {"instrument": "Fluke 87V", "next_due": "2027-05-01", "owner": "QA lab"},

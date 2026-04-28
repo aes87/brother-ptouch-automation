@@ -3,7 +3,7 @@
 **Status**: open (feature request)
 **Opened**: 2026-04-18
 **Updated**: 2026-04-18 (pivoted to "Claude resolves from a photo" after phone-compat discussion)
-**Requested by**: @aes87
+**Requested by**: @harteWired
 
 ## One-line summary
 
@@ -78,7 +78,7 @@ For `gh:` short-forms, a human-scanned real URL is a free bonus: iOS/Android rec
 default = "aes-vault"
 
 [github]
-default_owner = "aes87"
+default_owner = "harteWired"
 default_branch = "main"
 ```
 
@@ -143,7 +143,7 @@ The at-print-time resolver (expanding `vault:...` → `obsidian://...`) becomes 
 - **QR error correction**: on 12mm tape the QR is ~70×70 px ≈ 10×10 mm. Use error-correction level M (~15% redundancy) as today — fine for photo capture. Higher level = denser QR = harder to scan.
 - **Short-form lifespan**: these strings become printed bytes on a jar. If we rename the syntax later (say we drop `gh:` in favour of `github:`), old labels break. Lock in the syntax before printing a lot. Version-tag the short-form (`v1:vault:...`) if we want forward flexibility.
 - **Per-label metadata beyond the short-form**: do we also want a `label_id` in the QR for the local label→link index? Probably overkill — the short-form itself is the identity.
-- **QR density budget**: an 18-char short-form (`vault:kitchen/spice/paprika`) encodes fine at 70 px. A 60-char GitHub URL (`gh:aes87/brother-ptouch-automation/docs/proposals/0001-qr-context-linking.md`) is tighter. If this becomes a problem, introduce a short-hash alias mapping in a local TOML.
+- **QR density budget**: an 18-char short-form (`vault:kitchen/spice/paprika`) encodes fine at 70 px. A 60-char GitHub URL (`gh:harteWired/brother-ptouch-automation/docs/proposals/0001-qr-context-linking.md`) is tighter. If this becomes a problem, introduce a short-hash alias mapping in a local TOML.
 
 ## Rough sizing
 

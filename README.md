@@ -1,8 +1,8 @@
 # brother-ptouch-automation
 
 [![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://harteWired.github.io/brother-ptouch-automation/)
-[![CI](https://img.shields.io/github/actions/workflow/status/aes87/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/harteWired/brother-ptouch-automation/actions/workflows/ci.yml)
-[![license](https://img.shields.io/github/license/aes87/brother-ptouch-automation?style=for-the-badge)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/harteWired/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/harteWired/brother-ptouch-automation/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/harteWired/brother-ptouch-automation?style=for-the-badge)](LICENSE)
 
 **A small, flexible label engine** for the Brother **PT-P750W** (primary target; PT-P710BT and PT-E550W also work). One byte-exact raster core, one layout engine, a tiny TOML preset format for declaring new label types, and a QR / image decorator that snaps onto *any* label — all driveable from a CLI, an HTTP service, or a Claude Code skill.
 

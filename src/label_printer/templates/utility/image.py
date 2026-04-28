@@ -31,7 +31,7 @@ class ImageLabelTemplate(Template):
                 "caption",
                 "Optional caption text to print next to the image.",
                 required=False,
-                example="aes87",
+                example="harteWired",
             ),
             TemplateField(
                 "threshold",
