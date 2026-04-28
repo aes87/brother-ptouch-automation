@@ -1,14 +1,14 @@
 # brother-ptouch-automation
 
-[![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://aes87.github.io/brother-ptouch-automation/)
-[![CI](https://img.shields.io/github/actions/workflow/status/aes87/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/aes87/brother-ptouch-automation/actions/workflows/ci.yml)
+[![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://harteWired.github.io/brother-ptouch-automation/)
+[![CI](https://img.shields.io/github/actions/workflow/status/aes87/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/harteWired/brother-ptouch-automation/actions/workflows/ci.yml)
 [![license](https://img.shields.io/github/license/aes87/brother-ptouch-automation?style=for-the-badge)](LICENSE)
 
 **A small, flexible label engine** for the Brother **PT-P750W** (primary target; PT-P710BT and PT-E550W also work). One byte-exact raster core, one layout engine, a tiny TOML preset format for declaring new label types, and a QR / image decorator that snaps onto *any* label — all driveable from a CLI, an HTTP service, or a Claude Code skill.
 
 Adding a new label category is usually ~10 lines of TOML, not a Python class. Adding a QR code or an inline image to an existing label is a flag, not a new template. The fiddly stuff (cable-flag wrap geometry, polarity icons, GHS hazard symbols) stays in Python where it belongs; everything else is data.
 
-> ### 🌐 [Live demo: browse every template →](https://aes87.github.io/brother-ptouch-automation/)
+> ### 🌐 [Live demo: browse every template →](https://harteWired.github.io/brother-ptouch-automation/)
 >
 > All 36 templates across 12 packs, with live search, pack filters, field schemas, and copy-paste CLI examples for each one.
 
@@ -58,7 +58,7 @@ Templates have validated field schemas, dry-run is the default, and the three su
 
 **36 templates across 12 packs** — kitchen, electronics, 3D printing, utility, garden, networking, workshop, home-inventory, media, pet, travel, calibration. A full catalog of rendered previews + field schemas + copy-paste CLI examples lives at the demo site; this README shows a small sample.
 
-👉 **[Interactive demo with every template →](https://aes87.github.io/brother-ptouch-automation/)**
+👉 **[Interactive demo with every template →](https://harteWired.github.io/brother-ptouch-automation/)**
 
 | Pack | Template | Preview |
 |---|---|---|
@@ -82,7 +82,7 @@ Supported out of the box: `ethernet`, `cat5/5e/6/6a/7/8`, `coax`, `hdmi`, `displ
 ## Quickstart
 
 ```bash
-git clone https://github.com/aes87/brother-ptouch-automation.git
+git clone https://github.com/harteWired/brother-ptouch-automation.git
 cd brother-ptouch-automation
 python3.11 -m venv .venv
 .venv/bin/pip install -e '.[barcode,service,icons]'
@@ -105,7 +105,7 @@ python3.11 -m venv .venv
 
 # QR code with caption
 .venv/bin/lp render utility/qr \
-  -f data=https://github.com/aes87/brother-ptouch-automation \
+  -f data=https://github.com/harteWired/brother-ptouch-automation \
   -f caption=repo \
   --png-out qr.png
 

@@ -25,7 +25,7 @@ _FIXTURES: dict[str, dict[str, object]] = {
         "part": "Fan tub clip v2", "project": "fan-tub-adapter", "qty": "4",
     },
     "three_d_printing/tool_tag": {"tool": "Calipers", "owner": "aes / 3d-printing"},
-    "utility/qr": {"data": "https://github.com/aes87/brother-ptouch-automation", "caption": "repo"},
+    "utility/qr": {"data": "https://github.com/harteWired/brother-ptouch-automation", "caption": "repo"},
     "garden/seed_packet": {"variety": "Brandywine tomato", "sow_by": "2026-05-15", "year": "2025"},
     "garden/plant_tag": {"name": "Basil", "planted": "2026-04-15"},
     "garden/row_marker": {"crop": "Tomato", "variety": "Cherokee Purple"},
