@@ -1,21 +1,20 @@
 # brother-ptouch-automation
 
-[![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://harteWired.github.io/brother-ptouch-automation/) [![by harteWired](https://img.shields.io/badge/by-harteWired-e6a562?style=flat&labelColor=15151e)](https://github.com/harteWired)
-[![CI](https://img.shields.io/github/actions/workflow/status/harteWired/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/harteWired/brother-ptouch-automation/actions/workflows/ci.yml)
-[![license](https://img.shields.io/github/license/harteWired/brother-ptouch-automation?style=for-the-badge)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/harteWired/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=flat)](https://github.com/harteWired/brother-ptouch-automation/actions/workflows/ci.yml) [![license](https://img.shields.io/github/license/harteWired/brother-ptouch-automation?style=flat)](LICENSE) [![live demo](https://img.shields.io/badge/live%20demo-36%20templates-2ea44f?style=flat&logo=github)](https://harteWired.github.io/brother-ptouch-automation/) [![by harteWired](https://img.shields.io/badge/by-harteWired-e6a562?style=flat&labelColor=15151e)](https://github.com/harteWired)
 
 **A small, flexible label engine** for the Brother **PT-P750W** (primary target; PT-P710BT and PT-E550W also work). One byte-exact raster core, one layout engine, a tiny TOML preset format for declaring new label types, and a QR / image decorator that snaps onto *any* label — all driveable from a CLI, an HTTP service, or a Claude Code skill.
 
 Adding a new label category is usually ~10 lines of TOML, not a Python class. Adding a QR code or an inline image to an existing label is a flag, not a new template. The fiddly stuff (cable-flag wrap geometry, polarity icons, GHS hazard symbols) stays in Python where it belongs; everything else is data.
 
-> ### 🌐 [Live demo: browse every template →](https://harteWired.github.io/brother-ptouch-automation/)
->
-> All 36 templates across 12 packs, with live search, pack filters, field schemas, and copy-paste CLI examples for each one.
+<p align="center">
+  <img src="docs/previews/kitchen_pantry_jar_with_icon_12mm.png" alt="Kitchen pantry-jar label with wheat icon — 12 mm tape">
+  <img src="docs/previews/utility_qr_12mm.png" alt="Utility QR-code label with caption — 12 mm tape">
+  <img src="docs/previews/three_d_printing_filament_spool_12mm.png" alt="3D-printing filament-spool label — 12 mm tape">
+  <img src="docs/previews/electronics_cable_flag_12mm.png" alt="Electronics cable-flag label — 12 mm tape">
+</p>
 
-![kitchen pantry jar](docs/previews/kitchen_pantry_jar_with_icon_12mm.png)
-![utility qr](docs/previews/utility_qr_12mm.png)
-![3d filament spool](docs/previews/three_d_printing_filament_spool_12mm.png)
-![electronics cable flag](docs/previews/electronics_cable_flag_12mm.png)
+> [!TIP]
+> The full catalog — all 36 templates across 12 packs, with search, field schemas, and copy-paste CLI examples — is at the **[live demo site](https://harteWired.github.io/brother-ptouch-automation/)**.
 
 ## How it composes
 
@@ -56,9 +55,7 @@ Templates have validated field schemas, dry-run is the default, and the three su
 
 ## Template gallery
 
-**36 templates across 12 packs** — kitchen, electronics, 3D printing, utility, garden, networking, workshop, home-inventory, media, pet, travel, calibration. A full catalog of rendered previews + field schemas + copy-paste CLI examples lives at the demo site; this README shows a small sample.
-
-👉 **[Interactive demo with every template →](https://harteWired.github.io/brother-ptouch-automation/)**
+**36 templates across 12 packs** — kitchen, electronics, 3D printing, utility, garden, networking, workshop, home-inventory, media, pet, travel, calibration. The README shows a small sample; the [live demo site](https://harteWired.github.io/brother-ptouch-automation/) has every template with rendered previews, field schemas, and copy-paste CLI examples.
 
 | Pack | Template | Preview |
 |---|---|---|
@@ -215,6 +212,7 @@ Claude picks the right template, proposes fields, dry-renders a PNG for you to r
 
 ![Batch print flow — spec.json holding [label1, label2, …] enters the lp batch command, validates that every label uses the same tape width, renders each to a Pillow Image, then encode_batch emits a session prologue once followed by per-page commands (print_information + mode + advanced + margin + compression + raster + 0x0C next-page) repeated for each label. The last page appends 0x1A (print & feed). The PT-P750W produces one continuous strip with half-cuts between labels.](./docs/images/lp-batch-flow.png)
 
+> [!NOTE]
 > The cut command sequence is more subtle than the Brother Raster Command Reference's example would suggest — auto-cut on the Mode byte forces full cuts between every page in a chain, and the canonical "half-cut between, full cut at end" pattern requires a specific byte layout we discovered empirically. See [Cutting and batches — what actually works](./docs/cutting-and-batches.md) if you're touching the encoder, adding a new transport, or wondering why the obvious-from-the-spec answer doesn't work.
 
 ## How a single label is encoded
