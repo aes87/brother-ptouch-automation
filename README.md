@@ -1,6 +1,6 @@
 # brother-ptouch-automation
 
-[![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://harteWired.github.io/brother-ptouch-automation/)
+[![live demo](https://img.shields.io/badge/live_demo-browse_36_templates-2ea44f?style=for-the-badge&logo=github)](https://harteWired.github.io/brother-ptouch-automation/) [![by harteWired](https://img.shields.io/badge/by-harteWired-e6a562?style=flat&labelColor=15151e)](https://github.com/harteWired)
 [![CI](https://img.shields.io/github/actions/workflow/status/harteWired/brother-ptouch-automation/ci.yml?branch=main&label=ci&style=for-the-badge)](https://github.com/harteWired/brother-ptouch-automation/actions/workflows/ci.yml)
 [![license](https://img.shields.io/github/license/harteWired/brother-ptouch-automation?style=for-the-badge)](LICENSE)
 
